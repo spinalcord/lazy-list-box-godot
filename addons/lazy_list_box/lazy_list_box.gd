@@ -41,10 +41,6 @@ var preserve_focus: bool = true
 var focus_check_timer: Timer
 var last_known_focused_owner: Control = null
 
-# Optimized cooldown system
-var cooldown_timer: float = 0.0
-const COOLDOWN_TIME: float = 0.1
-
 # Cache frequently used values
 var data_size: int = 0
 var viewport_cache: Viewport = null
@@ -58,8 +54,8 @@ func _ready():
 	# Create a temporary instance to check methods
 	var temp_instance = item_template.instantiate()
 	# Check if required methods exist
-	assert(temp_instance.has_method("configure_item"), "Your Item Template needs `func configure_item(index: int, data):`")
-	assert(temp_instance.has_method("set_data"), "Your Item Template needs `func set_data(data):`")
+	assert(temp_instance.has_method("configure_item"), "Your ItemTemplate needs a script with this function: `func configure_item(index: int, data):`")
+	assert(temp_instance.has_method("set_data"), "Your ItemTemplate needs a script with this function: `func set_data(data):`")
 	
 	# Clean up the temporary instance
 	temp_instance.queue_free()
@@ -192,9 +188,9 @@ func _setup_focus_monitoring():
 	add_child(focus_check_timer)
 
 func _check_external_focus_loss():
-	"""Check if focus has moved outside the LazyListBox - optimized with HashSet"""
+	"""Check if focus has moved outside the LazyListBox - now handles child focus"""
 	if not has_virtual_focus:
-		focus_check_timer.stop()  # Stop monitoring when no virtual focus
+		focus_check_timer.stop()
 		return
 	
 	var current_focused = viewport_cache.gui_get_focus_owner()
@@ -205,12 +201,20 @@ func _check_external_focus_loss():
 	
 	last_known_focused_owner = current_focused
 	
-	# OPTIMIZATION: O(1) lookup instead of O(n) Array.has()
-	if current_focused and active_items_set.has(current_focused):
-		current_real_focused_item = current_focused
+	# Try to find the actual list item from the focused node
+	var actual_item = _get_item_from_focused_node(current_focused)
+	
+	if actual_item:
+		# Focus is within one of our items (even if it's a child)
+		current_real_focused_item = actual_item
+		
+		# Update virtual focus to match the item that contains the focused child
+		var data_index = _get_data_index_for_item(actual_item)
+		if data_index != -1 and data_index != virtual_focused_data_index:
+			virtual_focused_data_index = data_index
 		return
 	
-	# If focus moved outside our list, clear virtual focus
+	# If focus moved completely outside our list, clear virtual focus
 	if current_focused != null and not _is_descendant_of_listbox(current_focused):
 		_clear_virtual_focus()
 
@@ -222,23 +226,16 @@ func _is_descendant_of_listbox(node: Node) -> bool:
 	return self.is_ancestor_of(node)
 
 func _input(event):
-	if not preserve_focus or cooldown_timer > 0.0:
-		return
-
-	if event.is_action("ui_down"):
+	if event.is_action_pressed("ui_down"):
 		_handle_arrow_down()
 		accept_event()
-		cooldown_timer = COOLDOWN_TIME
+
 		
-	elif event.is_action("ui_up"):
+	elif event.is_action_pressed("ui_up"):
 		_handle_arrow_up()
 		accept_event()
-		cooldown_timer = COOLDOWN_TIME
 
-func _process(delta):
-	# Optimized cooldown system - only process when needed
-	if cooldown_timer > 0.0:
-		cooldown_timer -= delta
+
 
 func _handle_arrow_down():
 	"""Handle down arrow with virtual focus logic"""
@@ -340,12 +337,14 @@ func _apply_real_focus_if_visible():
 			current_real_focused_item = item
 
 func _get_currently_focused_item() -> Control:
-	"""Find which item currently has real UI focus - optimized O(1) instead of O(n)"""
+	"""Find which item currently has focus (including through child elements)"""
 	var focused = viewport_cache.gui_get_focus_owner()
-	# OPTIMIZATION: Use HashSet lookup O(1) instead of Array search O(n)
-	if focused and active_items_set.has(focused):
-		current_real_focused_item = focused
-		return focused
+	var actual_item = _get_item_from_focused_node(focused)
+	
+	if actual_item:
+		current_real_focused_item = actual_item
+		return actual_item
+	
 	current_real_focused_item = null
 	return null
 
@@ -504,8 +503,7 @@ func _refresh_visible_items():
 		call_deferred("_apply_real_focus_if_visible")
 
 func _configure_item(item: Control, index: int, item_data):
-	"""Configure an item with data - optimized with method caching"""
-	# OPTIMIZATION: Cache method names per item type to avoid repeated has_method() calls
+	"""Configure an item with data - now includes child focus setup"""
 	var key = item.get_script() if item.get_script() else item.get_class()
 	
 	if not method_cache.has(key):
@@ -519,6 +517,9 @@ func _configure_item(item: Control, index: int, item_data):
 	var method_name = method_cache[key]
 	if method_name:
 		item.call(method_name, index, item_data)
+	
+	# NEW: Set up child focus forwarding
+	_setup_child_focus_forwarding(item)
 
 func _clear_all_items():
 	"""Clear all items from the container - optimized to avoid get_children() allocation"""
@@ -621,3 +622,71 @@ func get_item_height() -> float:
 func get_calculated_visible_count() -> int:
 	"""Get the current calculated visible item count"""
 	return visible_item_count
+
+# ============================================================
+# NEW METHODS FOR CHILD FOCUS HANDLING
+# ============================================================
+
+func _get_item_from_focused_node(focused_node: Control) -> Control:
+	"""Find the actual list item from any focused child node"""
+	if not focused_node:
+		return null
+	
+	# If it's directly one of our active items, return it
+	if active_items_set.has(focused_node):
+		return focused_node
+	
+	# Walk up the tree to find the list item parent
+	var current_node = focused_node
+	while current_node:
+		# Check if current node is one of our list items
+		if active_items_set.has(current_node):
+			return current_node
+		
+		# Move to parent, but stop if we reach the content container or beyond
+		current_node = current_node.get_parent()
+		if current_node == content_container or current_node == self:
+			break
+	
+	return null
+
+func _setup_child_focus_forwarding(item: Control):
+	"""Set up focus forwarding for all interactive children of an item"""
+	_recursive_setup_focus_forwarding(item, item)
+
+func _recursive_setup_focus_forwarding(node: Node, root_item: Control):
+	"""Recursively set up focus forwarding for child nodes"""
+	for child in node.get_children():
+		if child is Control:
+			var control_child = child as Control
+			
+			# For buttons and other interactive controls, connect their focus signals
+			if control_child.focus_mode != Control.FOCUS_NONE:
+				# Connect focus signals if not already connected
+				if not control_child.focus_entered.is_connected(_on_child_focus_entered):
+					control_child.focus_entered.connect(_on_child_focus_entered.bind(control_child, root_item))
+				
+				# For buttons, also handle clicks to ensure proper focus
+				if control_child is Button:
+					if not control_child.pressed.is_connected(_on_child_button_pressed):
+						control_child.pressed.connect(_on_child_button_pressed.bind(control_child, root_item))
+		
+		# Recurse into children
+		_recursive_setup_focus_forwarding(child, root_item)
+
+func _on_child_focus_entered(child: Control, root_item: Control):
+	"""Handle when a child control gains focus"""
+	if preserve_focus:
+		var data_index = _get_data_index_for_item(root_item)
+		if data_index != -1:
+			_set_virtual_focus(data_index)
+			current_real_focused_item = root_item
+
+func _on_child_button_pressed(button: Control, root_item: Control):
+	"""Handle when a child button is pressed"""
+	# Ensure the list item maintains focus logic even when child is clicked
+	if preserve_focus:
+		var data_index = _get_data_index_for_item(root_item)
+		if data_index != -1:
+			_set_virtual_focus(data_index)
+			current_real_focused_item = root_item
