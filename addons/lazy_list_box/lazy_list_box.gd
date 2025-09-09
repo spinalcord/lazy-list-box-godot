@@ -3,11 +3,10 @@ class_name LazyListBox
 
 # Configuration properties
 @export var item_template: PackedScene
-@export var debug_mode: bool = false  # Enable/disable debug prints
 
 # NEW: Item height for intelligent calculation
 var item_height: float = 0.0
-## Calculates automatically the ammount of items that fits in the container
+## Automatically calculates the amount of items that fit in the container
 @export var auto_calculate_visible_count: bool = true
 ## Will be calculated automatically if `auto_calculate_visible_count` is false
 @export var visible_item_count: int = 10  
@@ -16,7 +15,6 @@ var item_height: float = 0.0
 @onready var scroll_bar: VScrollBar = %VScrollBar
 @onready var overlay_scroll_bar: VScrollBar = %VOverlayScrollBar
 @onready var content_container: VBoxContainer = %VBoxContainer
-@onready var scroll_container: ScrollContainer = %ScrollContainer
 
 # Data management
 var data: Array = []
@@ -107,8 +105,10 @@ func _determine_item_height():
 	if not item_template:
 		return
 	
-	var temp_item = item_template.instantiate()
-	content_container.add_child(temp_item)  # <- In den VBoxContainer!
+	var temp_item = item_template.instantiate() as Control
+	
+	content_container.add_child(temp_item)  # <- Add to the VBoxContainer!
+	
 	
 	# Configure with dummy data
 	if data.size() > 0:
@@ -117,14 +117,15 @@ func _determine_item_height():
 	# Wait for proper layout
 	temp_item.force_update_transform()
 	await get_tree().process_frame
-	await get_tree().process_frame  # Manchmal braucht es 2 Frames
+	await get_tree().process_frame  # Sometimes needs 2 frames
 	
 	item_height = temp_item.size.y
 	
 	temp_item.queue_free()
+	assert(temp_item.custom_minimum_size.y > 0, "Set minimum height in Inspector: Select your item_template `.tscn` -> Root Node -> Layout tab -> Custom Minimum Size -> IMPORTANT: set Y > 0")
 	
 	if item_height <= 0.0:
-		item_height = 32.0
+		item_height = 132.0
 
 func _setup_synchronized_scrollbars():
 	"""Setup synchronized scrollbar connections"""
@@ -620,8 +621,3 @@ func get_item_height() -> float:
 func get_calculated_visible_count() -> int:
 	"""Get the current calculated visible item count"""
 	return visible_item_count
-
-# Debug method - kept empty as requested
-func _debug_print(message: String):
-	"""Debug printing - intentionally empty"""
-	pass
