@@ -1,7 +1,7 @@
 ![Example 1](screenshots/1.gif)
 ![Example 1](screenshots/2.gif)
 
-# Lazy ListBox for Godot 4.4+
+# LazyListBox for Godot 4.4+
 
 A high-performance List-Box control that can handle thousands of items. 
 Works with a data template.
