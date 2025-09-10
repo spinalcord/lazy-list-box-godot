@@ -1,10 +1,12 @@
 ![Example 1](screenshots/1.gif)
 ![Example 1](screenshots/2.gif)
+![Example 1](screenshots/3.gif)
+
 
 # LazyListBox for Godot 4.4+
 
 A high-performance List-Box control that can handle thousands of items. 
-Works with a data template.
+Works with a data template. Leave a Star if you will ⭐
 
 ## Features
 - Virtual scrolling for optimal performance
@@ -72,7 +74,6 @@ func configure_item(index: int, data):
 # This is called by LazyListBox: to set the data
 func set_data(data):
 	item_data = data
-	button.text = str(data)
 ```
 Don't forget to assign the `Button`
 ```
@@ -135,4 +136,6 @@ func _ready():
 **Problem**: Focus not working
 - **Solution**: Use a Button as layout element. Activate `Flate` if you will use a layout in it
 
+**Problem**: I see no items
+- **Solution**: You propably forget to add items. Look at `Step 4`. Or it's layout problem: Then make sure you followed `Step 2`.
 
