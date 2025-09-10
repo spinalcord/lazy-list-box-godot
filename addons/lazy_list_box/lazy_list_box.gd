@@ -21,6 +21,14 @@ var data: Array = []
 var item_pool: Array[Control] = []
 var active_items: Array[Control] = []
 
+# NEW: Initialization state management
+var is_fully_initialized: bool = false
+var pending_data: Array = []
+var has_pending_data: bool = false
+
+# Signal emitted when LazyListBox is fully ready for use
+signal fully_ready
+
 # OPTIMIZATION: HashSet for O(1) lookup instead of O(n) Array.has()
 var active_items_set: Dictionary = {}  # key = item, value = true
 
@@ -72,18 +80,38 @@ func _ready():
 	# Connect resize signal for intelligent visible count calculation
 	resized.connect(_on_control_resized)
 	
-	# Initialize the list
-	_setup_initial_state()
+	# Initialize the list and handle async operations
+	await _setup_initial_state()
+	
+	# Mark as fully initialized
+	is_fully_initialized = true
+	
+	# Process any pending data that was set before initialization completed
+	if has_pending_data:
+		_process_pending_data()
+	
+	# Emit signal to notify that LazyListBox is fully ready
+	fully_ready.emit()
+
+func _process_pending_data():
+	"""Process data that was set before full initialization"""
+	if has_pending_data and pending_data.size() > 0:
+		var data_to_process = pending_data.duplicate()
+		pending_data.clear()
+		has_pending_data = false
+		
+		# Now safely process the data
+		_internal_set_data(data_to_process)
 
 func _on_control_resized():
 	"""Handle control resize to recalculate visible_item_count"""
-	if auto_calculate_visible_count:
+	if auto_calculate_visible_count and is_fully_initialized:
 		_calculate_visible_item_count()
 
 func _calculate_visible_item_count():
 	"""Calculate visible_item_count based on control size and item height"""
 	if item_height <= 0.0:
-		_determine_item_height()
+		await _determine_item_height()
 	
 	if item_height > 0.0:
 		var available_height = size.y
@@ -104,7 +132,6 @@ func _determine_item_height():
 	var temp_item = item_template.instantiate() as Control
 	
 	content_container.add_child(temp_item)  # <- Add to the VBoxContainer!
-	
 	
 	# Configure with dummy data
 	if data.size() > 0:
@@ -235,8 +262,6 @@ func _input(event):
 		_handle_arrow_up()
 		accept_event()
 
-
-
 func _handle_arrow_down():
 	"""Handle down arrow with virtual focus logic"""
 	# If no virtual focus exists, establish it on current item or first visible
@@ -353,16 +378,24 @@ func _get_data_index_for_item(item: Control) -> int:
 	var visual_index = active_items.find(item)
 	return current_scroll_index + visual_index if visual_index != -1 else -1
 
+# NEW: Public set_data method with automatic ready handling
 func set_data(new_data: Array):
-	"""Set the data array for the list"""
+	"""Set the data array for the list - handles initialization automatically"""
+	if not is_fully_initialized:
+		# Store data for later processing
+		pending_data = new_data.duplicate()
+		has_pending_data = true
+		return
+	
+	# If fully initialized, process immediately
+	_internal_set_data(new_data)
+
+# NEW: Internal method that actually processes the data
+func _internal_set_data(new_data: Array):
+	"""Internal method to set data when fully initialized"""
 	data = new_data
 	data_size = new_data.size()  # Cache size for performance
 	_clear_virtual_focus()  # Reset all focus state
-	
-	# Calculate visible count if we haven't determined item height yet
-	if auto_calculate_visible_count and item_height <= 0.0:
-		await _determine_item_height()
-		_calculate_visible_item_count()
 	
 	_update_scroll_range()
 	_refresh_visible_items()
@@ -373,11 +406,12 @@ func set_item_template(template: PackedScene):
 	item_height = 0.0  # Reset item height to recalculate
 	_clear_all_items()
 	
-	if auto_calculate_visible_count:
-		await _determine_item_height()
-		_calculate_visible_item_count()
-	else:
-		_create_item_pool()
+	if is_fully_initialized:
+		if auto_calculate_visible_count:
+			await _determine_item_height()
+			_calculate_visible_item_count()
+		else:
+			_create_item_pool()
 
 func _setup_initial_state():
 	"""Initialize the list with default values"""
@@ -568,8 +602,9 @@ func get_visible_range() -> Vector2i:
 
 func refresh():
 	"""Force refresh the entire list"""
-	_update_scroll_range()
-	_refresh_visible_items()
+	if is_fully_initialized:
+		_update_scroll_range()
+		_refresh_visible_items()
 
 func set_focus_preservation(enabled: bool):
 	"""Enable or disable focus preservation during scrolling"""
@@ -602,17 +637,31 @@ func is_list_focused() -> bool:
 	"""Check if this LazyListBox has any kind of focus (virtual or real)"""
 	return has_virtual_focus
 
+# NEW: Additional utility methods for initialization handling
+func is_ready_for_data() -> bool:
+	"""Check if LazyListBox is ready to receive data"""
+	return is_fully_initialized
+
+func get_initialization_status() -> String:
+	"""Get current initialization status for debugging"""
+	if is_fully_initialized:
+		return "Fully Initialized"
+	elif has_pending_data:
+		return "Initializing with Pending Data"
+	else:
+		return "Initializing"
+
 # NEW: Public API for manual control of visible count calculation
 func set_auto_calculate_visible_count(enabled: bool):
 	"""Enable or disable automatic calculation of visible_item_count"""
 	auto_calculate_visible_count = enabled
-	if enabled:
+	if enabled and is_fully_initialized:
 		_calculate_visible_item_count()
 
 func set_manual_item_height(height: float):
 	"""Manually set item height for calculation"""
 	item_height = height
-	if auto_calculate_visible_count:
+	if auto_calculate_visible_count and is_fully_initialized:
 		_calculate_visible_item_count()
 
 func get_item_height() -> float:
