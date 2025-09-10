@@ -1,7 +1,7 @@
 [gd_scene load_steps=3 format=3 uid="uid://ciwq8siqk71qj"]
 
-[ext_resource type="Script" uid="uid://bajj5hsmofgyg" path="res://addons/lazy_list_box/lazy_list_box.gd" id="1_rsbt8"]
-[ext_resource type="Script" uid="uid://05gx7klv05c6" path="res://addons/lazy_list_box/scroll_overlay.gd" id="2_wdy25"]
+[ext_resource type="Script" uid="uid://ccst4mj4wxo36" path="res://addons/lazy_list_box/lazy_list_box.gd" id="1_rsbt8"]
+[ext_resource type="Script" uid="uid://bdw8pcy5k4fen" path="res://addons/lazy_list_box/scroll_overlay.gd" id="2_wdy25"]
 
 [node name="LazyListBox" type="Control"]
 layout_mode = 3
