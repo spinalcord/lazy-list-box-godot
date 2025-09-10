@@ -4,7 +4,7 @@
 # LazyListBox for Godot 4.4+
 
 A high-performance List-Box control that can handle thousands of items. 
-Works with a data template.
+Works with a data template. Leave a Star if you will ⭐
 
 ## Features
 - Virtual scrolling for optimal performance
