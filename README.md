@@ -20,7 +20,7 @@ Works with a data template. Leave a Star if you will ⭐
 # Usage
 
 ## Step 1: Create the LazyListBox
-- Open your "Main Scene" and create a `CanvasLayer`, then drop the `lazy_list_box` into it.
+- Open your "Main Scene" and create a `CanvasLayer`, then drop the `lazy_list_box.tscn` into it.
 - You will see a `LazyListBox` control
 
 ## Step 2: Prepare your Item Template
