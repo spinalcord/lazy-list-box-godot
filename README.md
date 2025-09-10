@@ -1,5 +1,7 @@
 ![Example 1](screenshots/1.gif)
 ![Example 1](screenshots/2.gif)
+![Example 1](screenshots/3.gif)
+
 
 # LazyListBox for Godot 4.4+
 
@@ -72,7 +74,6 @@ func configure_item(index: int, data):
 # This is called by LazyListBox: to set the data
 func set_data(data):
 	item_data = data
-	button.text = str(data)
 ```
 Don't forget to assign the `Button`
 ```
