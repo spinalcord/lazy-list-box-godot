@@ -77,7 +77,7 @@ func set_data(data):
 ```
 Don't forget to assign the `Button`
 ```
-ItemTemplate <---- Assign the Button below to the script in your inspector
+ItemTemplate <---- Make sure your button below is assigned to `my_item_template.gd` script.
 └──Button 
 ```
 
