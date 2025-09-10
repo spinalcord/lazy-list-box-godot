@@ -135,4 +135,6 @@ func _ready():
 **Problem**: Focus not working
 - **Solution**: Use a Button as layout element. Activate `Flate` if you will use a layout in it
 
+**Problem**: I see no items
+- **Solution**: You propably forget to add items. Look at `Step 4`. Or it's layout problem: Then make sure you followed `Step 2`.
 
