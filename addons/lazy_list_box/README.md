@@ -5,13 +5,16 @@
 
 # LazyListBox for Godot 4.4+
 
-A high-performance List-Box control that can handle thousands of items. 
-Works with a data template. Leave a Star if you will ⭐
+A high-performance List-Box control that can handle 
+thousands of items by recycling a small pool of UI 
+elements and only displaying what's currently visible
+on screen instead of creating individual controls for
+every data entry, creating the illusion that you're scrolling
+through thousands of actual items. Leave a Star if you will ⭐
 
 ## Features
 - Lazy loading items
-- Virtual scrolling for optimal performance
-- Auto-calculation of visible items
+- Auto-calculation of visible items (Or use a fixed value)
 - Synchronized scrollbar
 - Focus management with keyboard navigation
 - Recycling/Caching items
