@@ -9,6 +9,7 @@ A high-performance List-Box control that can handle thousands of items.
 Works with a data template. Leave a Star if you will ⭐
 
 ## Features
+- Lazy loading items
 - Virtual scrolling for optimal performance
 - Auto-calculation of visible items
 - Synchronized scrollbar
@@ -138,4 +139,3 @@ func _ready():
 
 **Problem**: I see no items
 - **Solution**: You propably forget to add items. Look at `Step 4`. Or it's layout problem: Then make sure you followed `Step 2`.
-

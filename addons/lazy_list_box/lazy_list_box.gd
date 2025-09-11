@@ -11,10 +11,22 @@ var item_height: float = 0.0
 ## Will be calculated automatically if `auto_calculate_visible_count` is false
 @export var visible_item_count: int = 10  
 
+## Hide ScrollBar.
+@export var hide_scroll_bar: bool = true: 
+	set(value):
+		if scroll_bar != null:
+			scroll_bar.visible = value
+		else:
+			ready.connect(func(): scroll_bar.visible = value , CONNECT_ONE_SHOT)
+	get:
+		return scroll_bar.visible
+
 # Internal references
 @onready var scroll_bar: VScrollBar = %VScrollBar
 @onready var overlay_scroll_bar: VScrollBar = %VOverlayScrollBar
 @onready var content_container: VBoxContainer = %VBoxContainer
+
+
 
 # Data management
 var data: Array = []
@@ -92,6 +104,7 @@ func _ready():
 	
 	# Emit signal to notify that LazyListBox is fully ready
 	fully_ready.emit()
+
 
 func _process_pending_data():
 	"""Process data that was set before full initialization"""
