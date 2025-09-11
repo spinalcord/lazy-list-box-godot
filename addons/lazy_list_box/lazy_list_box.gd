@@ -269,11 +269,35 @@ func _input(event):
 	if event.is_action_pressed("ui_down"):
 		_handle_arrow_down()
 		accept_event()
-
-		
 	elif event.is_action_pressed("ui_up"):
 		_handle_arrow_up()
 		accept_event()
+	elif event.is_action_pressed("ui_home"):
+		_handle_home_key()
+		accept_event()
+	elif event.is_action_pressed("ui_end"):
+		_handle_end_key()
+		accept_event()
+
+func _handle_home_key():
+	"""Handle Home key - scroll to the very beginning of the list"""
+	# Scroll to the first item
+	scroll_to_index(0)
+	
+	# Set virtual focus to the first item if focus preservation is enabled
+	if preserve_focus and data_size > 0:
+		_set_virtual_focus(0)
+		_apply_real_focus_if_visible()
+
+func _handle_end_key():
+	"""Handle End key - scroll to the very end of the list"""
+	# Scroll to the last page of items
+	scroll_to_end()
+	
+	# Set virtual focus to the last item if focus preservation is enabled
+	if preserve_focus and data_size > 0:
+		_set_virtual_focus(data_size - 1)
+		_apply_real_focus_if_visible()
 
 func _handle_arrow_down():
 	"""Handle down arrow with virtual focus logic"""
