@@ -83,6 +83,12 @@ func _ready():
 	# Cache viewport reference
 	viewport_cache = get_viewport()
 	
+	# Set focus neighbors for content container
+	content_container.focus_neighbor_top = focus_neighbor_top
+	content_container.focus_neighbor_bottom = focus_neighbor_bottom
+	content_container.focus_neighbor_left = focus_neighbor_left
+	content_container.focus_neighbor_right = focus_neighbor_right
+	
 	# Setup focus monitoring timer with longer interval for better performance
 	_setup_focus_monitoring()
 	
@@ -104,6 +110,9 @@ func _ready():
 	
 	# Emit signal to notify that LazyListBox is fully ready
 	fully_ready.emit()
+	
+	content_container.focus_mode = Control.FOCUS_ALL
+	content_container.focus_entered.connect(func(): focus_item_at_data_index(current_scroll_index))
 
 
 func _process_pending_data():
@@ -266,18 +275,190 @@ func _is_descendant_of_listbox(node: Node) -> bool:
 	return self.is_ancestor_of(node)
 
 func _input(event):
-	if event.is_action_pressed("ui_down"):
-		_handle_arrow_down()
+	# Early return if input should not be handled by this LazyListBox
+	if not _should_handle_input():
+		return
+	
+	var focused_item = _get_focused_list_item()
+	var input_handled = _process_input_action(event, focused_item)
+	
+	if input_handled:
 		accept_event()
-	elif event.is_action_pressed("ui_up"):
-		_handle_arrow_up()
-		accept_event()
-	elif event.is_action_pressed("ui_home"):
-		_handle_home_key()
-		accept_event()
-	elif event.is_action_pressed("ui_end"):
-		_handle_end_key()
-		accept_event()
+
+func _should_handle_input() -> bool:
+	"""Check if this LazyListBox should handle the current input"""
+	var current_focused = viewport_cache.gui_get_focus_owner()
+	return current_focused != null and _is_descendant_of_listbox(current_focused)
+
+func _get_focused_list_item() -> Control:
+	"""Get the actual list item that currently has focus"""
+	var current_focused = viewport_cache.gui_get_focus_owner()
+	return _get_item_from_focused_node(current_focused)
+
+func _process_input_action(event: InputEvent, focused_item: Control) -> bool:
+	"""Process input actions and return true if input was handled"""
+	# Create action mapping for cleaner code structure
+	var action_handlers = {
+		"ui_down": _handle_down_input,
+		"ui_up": _handle_up_input,
+		"ui_left": _handle_left_input,
+		"ui_right": _handle_right_input,
+		"ui_page_down": _handle_page_down_input,
+		"ui_page_up": _handle_page_up_input,
+		"ui_home": _handle_home_input,
+		"ui_end": _handle_end_input
+	}
+	
+	# Check each action and call the appropriate handler
+	for action_name in action_handlers:
+		if event.is_action_pressed(action_name):
+			var handler = action_handlers[action_name]
+			handler.call(focused_item)
+			return true
+	
+	return false
+
+func _handle_down_input(focused_item: Control):
+	"""Handle down arrow input with neighbor focus logic"""
+	if _try_navigate_to_neighbor(focused_item, "down"):
+		return
+	
+	_handle_arrow_down()
+
+func _handle_up_input(focused_item: Control):
+	"""Handle up arrow input with neighbor focus logic"""
+	if _try_navigate_to_neighbor(focused_item, "up"):
+		return
+	
+	_handle_arrow_up()
+
+func _handle_left_input(focused_item: Control):
+	"""Handle left arrow input with neighbor focus"""
+	_try_navigate_to_neighbor(focused_item, "left")
+
+func _handle_right_input(focused_item: Control):
+	"""Handle right arrow input with neighbor focus"""
+	_try_navigate_to_neighbor(focused_item, "right")
+
+func _handle_page_down_input(focused_item: Control):
+	"""Handle page down input"""
+	_handle_page_down()
+
+func _handle_page_up_input(focused_item: Control):
+	"""Handle page up input"""
+	_handle_page_up()
+
+func _handle_home_input(focused_item: Control):
+	"""Handle home key input"""
+	_handle_home_key()
+
+func _handle_end_input(focused_item: Control):
+	"""Handle end key input"""
+	_handle_end_key()
+
+func _try_navigate_to_neighbor(focused_item: Control, direction: String) -> bool:
+	"""Try to navigate to a focus neighbor in the specified direction
+	Returns true if navigation was successful, false otherwise"""
+	
+	if not focused_item:
+		return false
+	
+	# Check boundary conditions for vertical navigation
+	if direction in ["up", "down"]:
+		var data_index = _get_data_index_for_item(focused_item)
+		if not _should_navigate_to_vertical_neighbor(data_index, direction):
+			return false
+	
+	# Get the appropriate neighbor path
+	var neighbor_path = _get_neighbor_path(direction)
+	if not neighbor_path:
+		return false
+	
+	# Try to focus the neighbor
+	return _focus_neighbor_node(neighbor_path)
+
+func _should_navigate_to_vertical_neighbor(data_index: int, direction: String) -> bool:
+	"""Check if we should navigate to vertical neighbor based on data position"""
+	if data_index == -1:
+		return false
+	
+	match direction:
+		"up":
+			return data_index == 0  # First item in data
+		"down":
+			return data_index == data_size - 1  # Last item in data
+		_:
+			return false
+
+func _get_neighbor_path(direction: String) -> NodePath:
+	"""Get the neighbor path for the specified direction"""
+	match direction:
+		"up":
+			return focus_neighbor_top
+		"down":
+			return focus_neighbor_bottom
+		"left":
+			return focus_neighbor_left
+		"right":
+			return focus_neighbor_right
+		_:
+			return NodePath()
+
+func _focus_neighbor_node(neighbor_path: NodePath) -> bool:
+	"""Focus the neighbor node if it exists and can process input
+	Returns true if focus was successful"""
+	
+	if neighbor_path.is_empty():
+		return false
+	
+	var neighbor = get_node_or_null(neighbor_path)
+	if not neighbor or not neighbor.can_process():
+		return false
+	
+	neighbor.grab_focus()
+	return true
+
+func _handle_page_down():
+	"""Handle Page Down key - scroll down by visible_item_count"""
+	# Calculate target index (scroll down by one page)
+	var target_scroll_index = current_scroll_index + visible_item_count
+	target_scroll_index = mini(target_scroll_index, max_scroll_index)
+	
+	scroll_to_index(target_scroll_index)
+	
+	# Set virtual focus if focus preservation is enabled
+	if preserve_focus and data_size > 0:
+		var target_focus_index = virtual_focused_data_index
+		if has_virtual_focus:
+			# Move virtual focus down by one page
+			target_focus_index = mini(virtual_focused_data_index + visible_item_count, data_size - 1)
+		else:
+			# If no virtual focus, set it to the first visible item
+			target_focus_index = target_scroll_index
+		
+		_set_virtual_focus(target_focus_index)
+		_apply_real_focus_if_visible()
+
+func _handle_page_up():
+	"""Handle Page Up key - scroll up by visible_item_count"""
+	# Calculate target index (scroll up by one page)
+	var target_scroll_index = current_scroll_index - visible_item_count
+	target_scroll_index = maxi(target_scroll_index, 0)
+	
+	scroll_to_index(target_scroll_index)
+	
+	# Set virtual focus if focus preservation is enabled
+	if preserve_focus and data_size > 0:
+		var target_focus_index = virtual_focused_data_index
+		if has_virtual_focus:
+			# Move virtual focus up by one page
+			target_focus_index = maxi(virtual_focused_data_index - visible_item_count, 0)
+		else:
+			# If no virtual focus, set it to the first visible item
+			target_focus_index = target_scroll_index
+		
+		_set_virtual_focus(target_focus_index)
+		_apply_real_focus_if_visible()
 
 func _handle_home_key():
 	"""Handle Home key - scroll to the very beginning of the list"""
