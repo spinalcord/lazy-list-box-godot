@@ -111,9 +111,13 @@ func _ready():
 	# Emit signal to notify that LazyListBox is fully ready
 	fully_ready.emit()
 	
-	content_container.focus_mode = Control.FOCUS_ALL
-	content_container.focus_entered.connect(func(): focus_item_at_data_index(current_scroll_index))
 
+	focus_mode = Control.FOCUS_ALL
+	focus_entered.connect(func(): 
+	# Only focus an item if no item is currently focused
+		if not _get_currently_focused_item() and not has_virtual_focus:
+			focus_item_at_data_index(current_scroll_index)
+	)
 
 func _process_pending_data():
 	"""Process data that was set before full initialization"""
@@ -753,6 +757,7 @@ func _refresh_visible_items():
 	# OPTIMIZATION: Only call deferred if virtual focus exists
 	if has_virtual_focus:
 		call_deferred("_apply_real_focus_if_visible")
+
 
 func _configure_item(item: Control, index: int, item_data):
 	"""Configure an item with data - now includes child focus setup"""
