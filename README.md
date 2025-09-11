@@ -1,5 +1,4 @@
-![Example 1](screenshots/2.gif)
-![Example 1](screenshots/3.gif)
+![Example 1](screenshots/1.gif)
 
 
 # LazyListBox for Godot 4.4+
