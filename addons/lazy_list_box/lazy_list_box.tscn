@@ -1,9 +1,8 @@
-[gd_scene load_steps=5 format=3 uid="uid://ciwq8siqk71qj"]
+[gd_scene load_steps=4 format=3 uid="uid://ciwq8siqk71qj"]
 
 [ext_resource type="Script" uid="uid://ccst4mj4wxo36" path="res://addons/lazy_list_box/lazy_list_box.gd" id="1_rsbt8"]
 [ext_resource type="PackedScene" uid="uid://cphtvc0soyija" path="res://test_button.tscn" id="2_80q5u"]
 [ext_resource type="Script" uid="uid://bdw8pcy5k4fen" path="res://addons/lazy_list_box/scroll_overlay.gd" id="2_wdy25"]
-[ext_resource type="Script" uid="uid://b73e8h2owifgi" path="res://test_data.gd" id="3_k6tj3"]
 
 [node name="LazyListBox" type="Control"]
 layout_mode = 3
@@ -44,7 +43,3 @@ content_container = NodePath("../VBoxContainer")
 [node name="VScrollBar" type="VScrollBar" parent="MarginContainer/HBoxContainer"]
 unique_name_in_owner = true
 layout_mode = 2
-
-[node name="Node" type="Node" parent="." node_paths=PackedStringArray("lazy_list")]
-script = ExtResource("3_k6tj3")
-lazy_list = NodePath("..")
