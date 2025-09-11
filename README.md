@@ -1,4 +1,3 @@
-![Example 1](screenshots/1.gif)
 ![Example 1](screenshots/2.gif)
 ![Example 1](screenshots/3.gif)
 
