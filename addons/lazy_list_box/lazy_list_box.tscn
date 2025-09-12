@@ -32,13 +32,12 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="VOverlayScrollBar" type="VScrollBar" parent="MarginContainer/HBoxContainer/MarginContainer" node_paths=PackedStringArray("content_container")]
+[node name="VOverlayScrollBar" type="VScrollBar" parent="MarginContainer/HBoxContainer/MarginContainer"]
 unique_name_in_owner = true
 modulate = Color(1, 1, 1, 0)
 layout_mode = 2
 size_flags_horizontal = 1
 script = ExtResource("2_wdy25")
-content_container = NodePath("../VBoxContainer")
 
 [node name="VScrollBar" type="VScrollBar" parent="MarginContainer/HBoxContainer"]
 unique_name_in_owner = true
