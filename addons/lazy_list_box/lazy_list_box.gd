@@ -738,11 +738,11 @@ func _set_virtual_focus(data_index: int) -> void:
 	virtual_focused_data_index = data_index
 	has_virtual_focus = true
 
-	# Start monitoring for external focus loss
-	if not focus_check_timer.is_stopped():
-		focus_check_timer.stop()
-	focus_check_timer.start()
-
+	# Guard: timer must be inside the scene tree before starting
+	if focus_check_timer and focus_check_timer.is_inside_tree():
+		if not focus_check_timer.is_stopped():
+			focus_check_timer.stop()
+		focus_check_timer.start()
 
 func _clear_virtual_focus() -> void:
 	"""Clear virtual focus state"""
