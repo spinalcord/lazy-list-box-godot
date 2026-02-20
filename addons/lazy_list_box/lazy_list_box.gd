@@ -879,10 +879,9 @@ func _update_scroll_range() -> void:
 			scrollbar.max_value = max_value
 			scrollbar.step = 1.0
 			scrollbar.page = page_size
-			scrollbar.value = 0.0
+			scrollbar.value = float(current_scroll_index)
 
 	is_updating_scrollbars = false
-	current_scroll_index = 0
 
 
 func _refresh_visible_items() -> void:
