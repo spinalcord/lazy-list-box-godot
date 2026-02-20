@@ -743,7 +743,7 @@ func _clear_virtual_focus() -> void:
 
 func _apply_real_focus_if_visible() -> void:
 	"""Apply real UI focus if virtually focused item is visible - optimized"""
-	if not has_virtual_focus:
+	if not has_virtual_focus or not is_visible_in_tree():
 		return
 
 	# Check if virtually focused item is currently visible - optimized range check
