@@ -46,7 +46,6 @@ var has_virtual_focus: bool = false
 var current_real_focused_item: Control = null
 var preserve_focus: bool = true
 # Focus monitoring - optimized
-var focus_check_timer: Timer
 var last_known_focused_owner: Control = null
 # Cache frequently used values
 var data_size: int = 0
@@ -414,21 +413,15 @@ func _sync_scrollbars(value: float, source_scrollbar: VScrollBar) -> void:
 
 
 func _setup_focus_monitoring() -> void:
-	"""Setup timer for monitoring external focus changes - optimized interval"""
-	focus_check_timer = Timer.new()
-	focus_check_timer.wait_time = 0.2 # Reduced frequency for better performance
-	focus_check_timer.timeout.connect(_check_external_focus_loss)
-	focus_check_timer.one_shot = false
-	add_child(focus_check_timer)
+	"""Setup monitoring external focus changes using Viewport signals"""
+	if viewport_cache and not viewport_cache.gui_focus_changed.is_connected(_on_gui_focus_changed):
+		viewport_cache.gui_focus_changed.connect(_on_gui_focus_changed)
 
 
-func _check_external_focus_loss() -> void:
-	"""Check if focus has moved outside the LazyListBox - now handles child focus"""
+func _on_gui_focus_changed(current_focused: Control) -> void:
+	"""Check if focus has moved outside the LazyListBox - triggered by viewport signal"""
 	if not has_virtual_focus:
-		focus_check_timer.stop()
 		return
-
-	var current_focused: Control = viewport_cache.gui_get_focus_owner()
 
 	# Early exit if no focus change
 	if current_focused == last_known_focused_owner:
@@ -738,21 +731,11 @@ func _set_virtual_focus(data_index: int) -> void:
 	virtual_focused_data_index = data_index
 	has_virtual_focus = true
 
-	# Guard: timer must be inside the scene tree before starting
-	if focus_check_timer and focus_check_timer.is_inside_tree():
-		if not focus_check_timer.is_stopped():
-			focus_check_timer.stop()
-		focus_check_timer.start()
-
 func _clear_virtual_focus() -> void:
 	"""Clear virtual focus state"""
 	virtual_focused_data_index = -1
 	has_virtual_focus = false
 	current_real_focused_item = null
-
-	# Stop focus monitoring
-	if not focus_check_timer.is_stopped():
-		focus_check_timer.stop()
 
 
 func _apply_real_focus_if_visible() -> void:
@@ -1047,3 +1030,4 @@ func _on_child_button_pressed(button: Control, root_item: Control) -> void:
 		if data_index != -1:
 			_set_virtual_focus(data_index)
 			current_real_focused_item = root_item
+
