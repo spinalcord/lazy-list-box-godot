@@ -777,7 +777,7 @@ func _get_data_index_for_item(item: Control) -> int:
 # NEW: Internal method that actually processes the data
 func _internal_set_data(new_data: Array) -> void:
 	"""Internal method to set data when fully initialized"""
-	var prev_size = data_size
+	var prev_size: int = data_size
 	data = new_data
 	data_size = new_data.size() # Cache size for performance
 
@@ -785,10 +785,10 @@ func _internal_set_data(new_data: Array) -> void:
 	if virtual_focused_data_index >= data_size:
 		_clear_virtual_focus()
 
-	# Only update scroll range (which resets position) if size changed or forced
-	if force_scroll_reset or prev_size != data_size:
+	# Only update scroll range if the data size has changed
+	if prev_size != data_size:
 		_update_scroll_range()
-	
+
 	_refresh_visible_items()
 
 
