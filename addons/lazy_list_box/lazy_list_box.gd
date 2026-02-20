@@ -22,6 +22,9 @@ signal item_created(item: Control)
 	get:
 		return scroll_bar.visible
 
+## Force scroll position reset when setting data, even if item count is identical
+@export var force_scroll_reset: bool = false
+
 # NEW: Item height for intelligent calculation
 var item_height: float = 0.0
 # Data management
@@ -774,6 +777,7 @@ func _get_data_index_for_item(item: Control) -> int:
 # NEW: Internal method that actually processes the data
 func _internal_set_data(new_data: Array) -> void:
 	"""Internal method to set data when fully initialized"""
+	var prev_size = data_size
 	data = new_data
 	data_size = new_data.size() # Cache size for performance
 
@@ -781,7 +785,10 @@ func _internal_set_data(new_data: Array) -> void:
 	if virtual_focused_data_index >= data_size:
 		_clear_virtual_focus()
 
-	_update_scroll_range()
+	# Only update scroll range (which resets position) if size changed or forced
+	if force_scroll_reset or prev_size != data_size:
+		_update_scroll_range()
+	
 	_refresh_visible_items()
 
 
@@ -861,6 +868,9 @@ func _update_scroll_range() -> void:
 
 	# Prevent recursive updates during synchronization
 	is_updating_scrollbars = true
+
+	# Clamp current scroll index to new bounds
+	current_scroll_index = clampi(current_scroll_index, 0, max_scroll_index)
 
 	# Configure both scrollbars with identical settings
 	for scrollbar: VScrollBar in [scroll_bar, overlay_scroll_bar]:
