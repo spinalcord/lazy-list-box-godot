@@ -101,7 +101,57 @@ func _ready():
 	# Set the data
 	lazy_list.set_data(test_data)
 ```
-## Public API Methods
+
+# Advanced Topics
+## Bubbling events up
+Sometime you need the item data in the same scope where your LazyListBox instance are e.g. using a selfmade ContextMenu at a specefic item.
+If you want to handle item clicks or other interactions in your main UI script rather than inside the item template itself, you can bubble up events using signals and this generic pattern (which is not limited to button base classes):
+
+> [!TIP]  
+> Don't worry about event overflows. LazyListBox safely reuses items while scrolling, no additional events will be created.
+
+## Step 1: Create a custom signal in your Item Template (`my_item_template.gd`):
+```gdscript
+extends Button
+
+var item_data
+
+signal action_requested(data)
+
+func _ready() -> void:
+	button_down.connect(func(): action_requested.emit(item_data))
+
+func configure_item(index: int, data) -> void:
+	item_data = data
+	text = str(data)
+```
+
+## Step 2: Catch the signal in your Main UI using `item_created`:
+The `LazyListBox` recycles items. You need to connect your custom signal whenever a new item is created by the `LazyListBox` pool.
+
+```gdscript
+extends Control
+
+@onready var lazy_list_box: LazyListBox = $LazyListBox
+
+func _ready() -> void:
+	# Connect to already existing pool items
+	for item in lazy_list_box.item_pool:
+		_on_list_item_created(item)
+	
+	# Connect to items created in the future
+	lazy_list_box.item_created.connect(_on_list_item_created)
+
+func _on_list_item_created(item: Control) -> void:
+	# Check if the item has your signal and connect it
+	if item.has_signal("action_requested"):
+		item.action_requested.connect(_on_item_action_requested)
+
+func _on_item_action_requested(data) -> void:
+	print("Handled event in main UI for data: ", data)
+```
+
+# Public API Methods
 
 ### Basic Operations
 - `set_data(data_array: Array)` - Use that to set the data and to refresh array size changes.
