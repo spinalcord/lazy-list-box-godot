@@ -137,8 +137,8 @@ func _input(event):
 
 
 # NEW: Public set_data method with automatic ready handling
+## Set the data array for the list - handles initialization automatically
 func set_data(new_data: Array):
-	"""Set the data array for the list - handles initialization automatically"""
 	if not is_fully_initialized:
 		# Store data for later processing
 		pending_data = new_data.duplicate()
@@ -149,8 +149,8 @@ func set_data(new_data: Array):
 	_internal_set_data(new_data)
 
 
+## Set the item template scene
 func set_item_template(template: PackedScene):
-	"""Set the item template scene"""
 	item_template = template
 	item_height = 0.0 # Reset item height to recalculate
 	_clear_all_items()
@@ -164,8 +164,8 @@ func set_item_template(template: PackedScene):
 
 
 # Public API methods - now with synchronized scrolling
+## Scroll to a specific data index - synchronized across both scrollbars
 func scroll_to_index(index: int):
-	"""Scroll to a specific data index - synchronized across both scrollbars"""
 	var target_value: float = float(clampi(index, 0, max_scroll_index))
 
 	# Prevent recursive updates
@@ -184,35 +184,35 @@ func scroll_to_index(index: int):
 	_refresh_visible_items()
 
 
+## Scroll to the very end of the list
 func scroll_to_end():
-	"""Scroll to the very end of the list"""
 	if data_size > 0:
 		scroll_to_index(max_scroll_index)
 
 
+## Get the range of currently visible data indices - optimized
 func get_visible_range() -> Vector2i:
-	"""Get the range of currently visible data indices - optimized"""
 	var start_index: int = current_scroll_index
 	var end_index: int = mini(current_scroll_index + visible_item_count - 1, data_size - 1)
 	return Vector2i(start_index, end_index)
 
 
+## Force refresh the entire list
 func refresh():
-	"""Force refresh the entire list"""
 	if is_fully_initialized:
 		_update_scroll_range()
 		_refresh_visible_items()
 
 
+## Enable or disable focus preservation during scrolling
 func set_focus_preservation(enabled: bool) -> void:
-	"""Enable or disable focus preservation during scrolling"""
 	preserve_focus = enabled
 	if not enabled:
 		_clear_virtual_focus()
 
 
+## Manually focus an item at the given data index - optimized
 func focus_item_at_data_index(data_index: int) -> void:
-	"""Manually focus an item at the given data index - optimized"""
 	if data_index < 0 or data_index >= data_size:
 		return
 
@@ -229,31 +229,31 @@ func focus_item_at_data_index(data_index: int) -> void:
 		_apply_real_focus_if_visible()
 
 
+## Get the currently virtually focused data index (-1 if none)
 func get_virtual_focused_index() -> int:
-	"""Get the currently virtually focused data index (-1 if none)"""
 	return virtual_focused_data_index if has_virtual_focus else -1
 
 
+## Focus the first available or currently scrolled-to item
 func grab_initial_focus() -> void:
-	"""Focus the first available or currently scrolled-to item"""
 	if data_size > 0:
 		# Focus the item at current scroll position (usually 0)
 		focus_item_at_data_index(current_scroll_index)
 
 
+## Check if this LazyListBox has any kind of focus (virtual or real)
 func is_list_focused() -> bool:
-	"""Check if this LazyListBox has any kind of focus (virtual or real)"""
 	return has_virtual_focus
 
 
 # NEW: Additional utility methods for initialization handling
+## Check if LazyListBox is ready to receive data
 func is_ready_for_data() -> bool:
-	"""Check if LazyListBox is ready to receive data"""
 	return is_fully_initialized
 
 
+## Get current initialization status for debugging
 func get_initialization_status() -> String:
-	"""Get current initialization status for debugging"""
 	if is_fully_initialized:
 		return "Fully Initialized"
 	elif has_pending_data:
@@ -263,32 +263,32 @@ func get_initialization_status() -> String:
 
 
 # NEW: Public API for manual control of visible count calculation
+## Enable or disable automatic calculation of visible_item_count
 func set_auto_calculate_visible_count(enabled: bool) -> void:
-	"""Enable or disable automatic calculation of visible_item_count"""
 	auto_calculate_visible_count = enabled
 	if enabled and is_fully_initialized:
 		_calculate_visible_item_count()
 
 
+## Manually set item height for calculation
 func set_manual_item_height(height: float) -> void:
-	"""Manually set item height for calculation"""
 	item_height = height
 	if auto_calculate_visible_count and is_fully_initialized:
 		_calculate_visible_item_count()
 
 
+## Get the current item height
 func get_item_height() -> float:
-	"""Get the current item height"""
 	return item_height
 
 
+## Get the current calculated visible item count
 func get_calculated_visible_count() -> int:
-	"""Get the current calculated visible item count"""
 	return visible_item_count
 
 
+## Process data that was set before full initialization
 func _process_pending_data() -> void:
-	"""Process data that was set before full initialization"""
 	if has_pending_data and pending_data.size() > 0:
 		var data_to_process: Array = pending_data.duplicate()
 		pending_data.clear()
@@ -298,14 +298,14 @@ func _process_pending_data() -> void:
 		_internal_set_data(data_to_process)
 
 
+## Handle control resize to recalculate visible_item_count
 func _on_control_resized() -> void:
-	"""Handle control resize to recalculate visible_item_count"""
 	if auto_calculate_visible_count and is_fully_initialized:
 		_calculate_visible_item_count()
 
 
+## Calculate visible_item_count based on control size and item height
 func _calculate_visible_item_count() -> void:
-	"""Calculate visible_item_count based on control size and item height"""
 	if item_height <= 0.0:
 		await _determine_item_height()
 
@@ -321,8 +321,8 @@ func _calculate_visible_item_count() -> void:
 			_refresh_visible_items()
 
 
+## Determine item height by creating a temporary item IN THE ACTUAL CONTAINER
 func _determine_item_height() -> void:
-	"""Determine item height by creating a temporary item IN THE ACTUAL CONTAINER"""
 	if not item_template:
 		return
 
@@ -353,8 +353,8 @@ func _determine_item_height() -> void:
 		item_height = 132.0
 
 
+## Setup synchronized scrollbar connections
 func _setup_synchronized_scrollbars() -> void:
-	"""Setup synchronized scrollbar connections"""
 	if scroll_bar:
 		scroll_bar.value_changed.connect(_on_main_scroll_changed)
 		_configure_scrollbar(scroll_bar)
@@ -364,31 +364,31 @@ func _setup_synchronized_scrollbars() -> void:
 		_configure_scrollbar(overlay_scroll_bar)
 
 
+## Configure a scrollbar with consistent settings
 func _configure_scrollbar(scrollbar: VScrollBar) -> void:
-	"""Configure a scrollbar with consistent settings"""
 	scrollbar.step = 1.0
 	scrollbar.allow_greater = false
 	scrollbar.allow_lesser = false
 
 
+## Handle main scroll bar value changes
 func _on_main_scroll_changed(value: float) -> void:
-	"""Handle main scroll bar value changes"""
 	if is_updating_scrollbars:
 		return
 
 	_handle_scroll_change(value, scroll_bar)
 
 
+## Handle overlay scroll bar value changes
 func _on_overlay_scroll_changed(value: float) -> void:
-	"""Handle overlay scroll bar value changes"""
 	if is_updating_scrollbars:
 		return
 
 	_handle_scroll_change(value, overlay_scroll_bar)
 
 
+## Handle scroll changes and synchronize both scrollbars
 func _handle_scroll_change(value: float, source_scrollbar: VScrollBar) -> void:
-	"""Handle scroll changes and synchronize both scrollbars"""
 	var new_scroll_index: int = roundi(value) # Use roundi for better performance
 	new_scroll_index = clampi(new_scroll_index, 0, max_scroll_index) # Use clampi for integers
 
@@ -402,8 +402,8 @@ func _handle_scroll_change(value: float, source_scrollbar: VScrollBar) -> void:
 		_refresh_visible_items()
 
 
+## Synchronize both scrollbars to the same value without triggering events
 func _sync_scrollbars(value: float, source_scrollbar: VScrollBar) -> void:
-	"""Synchronize both scrollbars to the same value without triggering events"""
 	is_updating_scrollbars = true
 
 	# Update the scrollbar that wasn't the source of the change
@@ -415,14 +415,14 @@ func _sync_scrollbars(value: float, source_scrollbar: VScrollBar) -> void:
 	is_updating_scrollbars = false
 
 
+## Setup monitoring external focus changes using Viewport signals
 func _setup_focus_monitoring() -> void:
-	"""Setup monitoring external focus changes using Viewport signals"""
 	if viewport_cache and not viewport_cache.gui_focus_changed.is_connected(_on_gui_focus_changed):
 		viewport_cache.gui_focus_changed.connect(_on_gui_focus_changed)
 
 
+## Check if focus has moved outside the LazyListBox - triggered by viewport signal
 func _on_gui_focus_changed(current_focused: Control) -> void:
-	"""Check if focus has moved outside the LazyListBox - triggered by viewport signal"""
 	if not has_virtual_focus:
 		return
 
@@ -450,29 +450,28 @@ func _on_gui_focus_changed(current_focused: Control) -> void:
 		_clear_virtual_focus()
 
 
+## Check if a node is a descendant of this LazyListBox - optimized with engine method
 func _is_descendant_of_listbox(node: Node) -> bool:
-	"""Check if a node is a descendant of this LazyListBox - optimized with engine method"""
 	if not node:
 		return false
 	# OPTIMIZATION: Use engine-optimized is_ancestor_of() instead of manual loop
 	return is_ancestor_of(node)
 
 
+## Check if this LazyListBox should handle the current input
 func _should_handle_input() -> bool:
-	"""Check if this LazyListBox should handle the current input"""
 	var current_focused: Control = viewport_cache.gui_get_focus_owner()
 	return _is_descendant_of_listbox(current_focused)
 
 
+## Get the actual list item that currently has focus
 func _get_focused_list_item() -> Control:
-	"""Get the actual list item that currently has focus"""
 	var current_focused: Control = viewport_cache.gui_get_focus_owner()
 	return _get_item_from_focused_node(current_focused)
 
 
+## Process input actions and return true if input was handled
 func _input_action_processed(event: InputEvent, focused_item: Control) -> bool:
-	"""Process input actions and return true if input was handled"""
-
 	# Check each action and call the appropriate handler
 	for action_name: StringName in _action_handlers:
 		if event.is_action_pressed(action_name):
@@ -483,55 +482,55 @@ func _input_action_processed(event: InputEvent, focused_item: Control) -> bool:
 	return false
 
 
+## Handle down arrow input with neighbor focus logic
 func _handle_down_input(focused_item: Control) -> void:
-	"""Handle down arrow input with neighbor focus logic"""
 	if _try_navigate_to_neighbor(focused_item, &"down"):
 		return
 
 	_handle_arrow_down()
 
 
+## Handle up arrow input with neighbor focus logic
 func _handle_up_input(focused_item: Control) -> void:
-	"""Handle up arrow input with neighbor focus logic"""
 	if _try_navigate_to_neighbor(focused_item, &"up"):
 		return
 
 	_handle_arrow_up()
 
 
+## Handle left arrow input with neighbor focus
 func _handle_left_input(focused_item: Control) -> void:
-	"""Handle left arrow input with neighbor focus"""
 	_try_navigate_to_neighbor(focused_item, &"left")
 
 
+## Handle right arrow input with neighbor focus
 func _handle_right_input(focused_item: Control) -> void:
-	"""Handle right arrow input with neighbor focus"""
 	_try_navigate_to_neighbor(focused_item, &"right")
 
 
+## Handle page down input
 func _handle_page_down_input(focused_item: Control) -> void:
-	"""Handle page down input"""
 	_handle_page_down()
 
 
+## Handle page up input
 func _handle_page_up_input(focused_item: Control) -> void:
-	"""Handle page up input"""
 	_handle_page_up()
 
 
+## Handle home key input
 func _handle_home_input(focused_item: Control) -> void:
-	"""Handle home key input"""
 	_handle_home_key()
 
 
+## Handle end key input
 func _handle_end_input(focused_item: Control) -> void:
-	"""Handle end key input"""
 	_handle_end_key()
 
 
+## Try to navigate to a focus neighbor in the specified direction
+## Returns true if navigation was successful, false otherwise
 func _try_navigate_to_neighbor(focused_item: Control, direction: StringName) -> bool:
-	"""Try to navigate to a focus neighbor in the specified direction
-	Returns true if navigation was successful, false otherwise"""
 	const DIRECTIONS: Array[StringName] = [&"up", &"down"]
 
 	if not focused_item:
@@ -549,8 +548,8 @@ func _try_navigate_to_neighbor(focused_item: Control, direction: StringName) -> 
 	return _focus_neighbor_node(neighbor_path)
 
 
+## Check if we should navigate to vertical neighbor based on data position
 func _should_navigate_to_vertical_neighbor(data_index: int, direction: StringName) -> bool:
-	"""Check if we should navigate to vertical neighbor based on data position"""
 	if data_index == -1:
 		return false
 
@@ -563,8 +562,8 @@ func _should_navigate_to_vertical_neighbor(data_index: int, direction: StringNam
 			return false
 
 
+## Get the neighbor path for the specified direction
 func _get_neighbor_path(direction: StringName) -> NodePath:
-	"""Get the neighbor path for the specified direction"""
 	match direction:
 		&"up":
 			return focus_neighbor_top
@@ -578,10 +577,9 @@ func _get_neighbor_path(direction: StringName) -> NodePath:
 			return NodePath()
 
 
+## Focus the neighbor node if it exists and can process input
+## Returns true if focus was successful
 func _focus_neighbor_node(neighbor_path: NodePath) -> bool:
-	"""Focus the neighbor node if it exists and can process input
-	Returns true if focus was successful"""
-
 	if neighbor_path.is_empty() or not neighbor_path:
 		return false
 
@@ -593,8 +591,8 @@ func _focus_neighbor_node(neighbor_path: NodePath) -> bool:
 	return true
 
 
+## Handle Page Down key - scroll down by visible_item_count
 func _handle_page_down() -> void:
-	"""Handle Page Down key - scroll down by visible_item_count"""
 	# Calculate target index (scroll down by one page)
 	var target_scroll_index: int = current_scroll_index + visible_item_count
 	target_scroll_index = mini(target_scroll_index, max_scroll_index)
@@ -615,8 +613,8 @@ func _handle_page_down() -> void:
 		_apply_real_focus_if_visible()
 
 
+## Handle Page Up key - scroll up by visible_item_count
 func _handle_page_up() -> void:
-	"""Handle Page Up key - scroll up by visible_item_count"""
 	# Calculate target index (scroll up by one page)
 	var target_scroll_index: int = current_scroll_index - visible_item_count
 	target_scroll_index = maxi(target_scroll_index, 0)
@@ -637,8 +635,8 @@ func _handle_page_up() -> void:
 		_apply_real_focus_if_visible()
 
 
+## Handle Home key - scroll to the very beginning of the list
 func _handle_home_key() -> void:
-	"""Handle Home key - scroll to the very beginning of the list"""
 	# Scroll to the first item
 	scroll_to_index(0)
 
@@ -648,8 +646,8 @@ func _handle_home_key() -> void:
 		_apply_real_focus_if_visible()
 
 
+## Handle End key - scroll to the very end of the list
 func _handle_end_key() -> void:
-	"""Handle End key - scroll to the very end of the list"""
 	# Scroll to the last page of items
 	scroll_to_end()
 
@@ -659,8 +657,8 @@ func _handle_end_key() -> void:
 		_apply_real_focus_if_visible()
 
 
+## Handle down arrow with virtual focus logic
 func _handle_arrow_down() -> void:
-	"""Handle down arrow with virtual focus logic"""
 	# If no virtual focus exists, establish it on current item or first visible
 	if not has_virtual_focus:
 		var current_focused: Control = _get_currently_focused_item()
@@ -687,8 +685,8 @@ func _handle_arrow_down() -> void:
 	_apply_real_focus_if_visible()
 
 
+## Handle up arrow with virtual focus logic
 func _handle_arrow_up() -> void:
-	"""Handle up arrow with virtual focus logic"""
 	# If no virtual focus exists, establish it on current item or last visible
 	if not has_virtual_focus:
 		var current_focused: Control = _get_currently_focused_item()
@@ -715,34 +713,34 @@ func _handle_arrow_up() -> void:
 	_apply_real_focus_if_visible()
 
 
+## Establish virtual focus based on currently focused item
 func _establish_virtual_focus_from_item(item: Control) -> void:
-	"""Establish virtual focus based on currently focused item"""
 	var data_index: int = _get_data_index_for_item(item)
 	if data_index != -1:
 		_set_virtual_focus(data_index)
 
 
+## Establish virtual focus at specific data index
 func _establish_virtual_focus_at_index(data_index: int) -> void:
-	"""Establish virtual focus at specific data index"""
 	if data_index >= 0 and data_index < data_size: # Use cached size
 		_set_virtual_focus(data_index)
 		_apply_real_focus_if_visible()
 
 
+## Set virtual focus to specific data index
 func _set_virtual_focus(data_index: int) -> void:
-	"""Set virtual focus to specific data index"""
 	virtual_focused_data_index = data_index
 	has_virtual_focus = true
 
+## Clear virtual focus state
 func _clear_virtual_focus() -> void:
-	"""Clear virtual focus state"""
 	virtual_focused_data_index = -1
 	has_virtual_focus = false
 	current_real_focused_item = null
 
 
+## Apply real UI focus if virtually focused item is visible - optimized
 func _apply_real_focus_if_visible() -> void:
-	"""Apply real UI focus if virtually focused item is visible - optimized"""
 	if not has_virtual_focus or not is_visible_in_tree():
 		return
 
@@ -755,8 +753,8 @@ func _apply_real_focus_if_visible() -> void:
 			current_real_focused_item = item
 
 
+## Find which item currently has focus (including through child elements)
 func _get_currently_focused_item() -> Control:
-	"""Find which item currently has focus (including through child elements)"""
 	var focused: Control = viewport_cache.gui_get_focus_owner()
 	var actual_item: Control = _get_item_from_focused_node(focused)
 
@@ -768,15 +766,15 @@ func _get_currently_focused_item() -> Control:
 	return null
 
 
+## Find the data index for a given item control - optimized
 func _get_data_index_for_item(item: Control) -> int:
-	"""Find the data index for a given item control - optimized"""
 	var visual_index: int = active_items.find(item)
 	return current_scroll_index + visual_index if visual_index != -1 else -1
 
 
 # NEW: Internal method that actually processes the data
+## Internal method to set data when fully initialized
 func _internal_set_data(new_data: Array) -> void:
-	"""Internal method to set data when fully initialized"""
 	var prev_size: int = data_size
 	data = new_data
 	data_size = new_data.size() # Cache size for performance
@@ -792,8 +790,8 @@ func _internal_set_data(new_data: Array) -> void:
 	_refresh_visible_items()
 
 
+## Initialize the list with default values
 func _setup_initial_state() -> void:
-	"""Initialize the list with default values"""
 	_clear_all_items()
 
 	if item_template:
@@ -807,8 +805,8 @@ func _setup_initial_state() -> void:
 	_refresh_visible_items()
 
 
+## Create a pool of reusable item instances - optimized
 func _create_item_pool() -> void:
-	"""Create a pool of reusable item instances - optimized"""
 	var pool_size: int = visible_item_count + 2 # +2 for buffer items
 
 	# Clear existing pool
@@ -837,8 +835,8 @@ func _create_item_pool() -> void:
 		item_created.emit(item)
 
 
+## Handle when an item gains focus - establish virtual focus
 func _on_item_focus_entered(item: Control) -> void:
-	"""Handle when an item gains focus - establish virtual focus"""
 	if not preserve_focus:
 		return
 
@@ -848,16 +846,16 @@ func _on_item_focus_entered(item: Control) -> void:
 		current_real_focused_item = item
 
 
+## Handle when an item loses focus
 func _on_item_focus_exited(item: Control) -> void:
-	"""Handle when an item loses focus"""
 	# Don't immediately clear virtual focus - let the monitoring system handle it
 	# This allows for focus to move between our items without losing virtual focus
 	if current_real_focused_item == item:
 		current_real_focused_item = null
 
 
+## Update scroll bar range based on data size - synchronized for both scrollbars
 func _update_scroll_range() -> void:
-	"""Update scroll bar range based on data size - synchronized for both scrollbars"""
 	if not scroll_bar and not overlay_scroll_bar:
 		return
 
@@ -884,9 +882,8 @@ func _update_scroll_range() -> void:
 	is_updating_scrollbars = false
 
 
+## Refresh the visible items based on current scroll position - optimized
 func _refresh_visible_items() -> void:
-	"""Refresh the visible items based on current scroll position - optimized"""
-
 	# Clear current real focused item reference if it's about to become invisible
 	if current_real_focused_item:
 		current_real_focused_item = null
@@ -940,8 +937,8 @@ func _refresh_visible_items() -> void:
 		call_deferred("_apply_real_focus_if_visible")
 
 
+## Configure an item with data - now includes child focus setup
 func _configure_item(item: Control, index: int, item_data) -> void:
-	"""Configure an item with data - now includes child focus setup"""
 	var script: Variant = item.get_script() #Make call once
 	var key = script if script else item.get_class()
 
@@ -956,8 +953,8 @@ func _configure_item(item: Control, index: int, item_data) -> void:
 	_setup_child_focus_forwarding(item)
 
 
+## Clear all items from the container - optimized to avoid get_children() allocation
 func _clear_all_items() -> void:
-	"""Clear all items from the container - optimized to avoid get_children() allocation"""
 	active_items.clear()
 	active_items_set.clear() # OPTIMIZATION: Clear HashSet too
 	_clear_virtual_focus()
@@ -974,8 +971,8 @@ func _clear_all_items() -> void:
 # ============================================================
 # NEW METHODS FOR CHILD FOCUS HANDLING
 # ============================================================
+## Find the actual list item from any focused child node
 func _get_item_from_focused_node(focused_node: Control) -> Control:
-	"""Find the actual list item from any focused child node"""
 	if not focused_node:
 		return null
 
@@ -998,13 +995,13 @@ func _get_item_from_focused_node(focused_node: Control) -> Control:
 	return null
 
 
+## Set up focus forwarding for all interactive children of an item
 func _setup_child_focus_forwarding(item: Control) -> void:
-	"""Set up focus forwarding for all interactive children of an item"""
 	_recursive_setup_focus_forwarding(item, item)
 
 
+## Recursively set up focus forwarding for child nodes
 func _recursive_setup_focus_forwarding(node: Node, root_item: Control):
-	"""Recursively set up focus forwarding for child nodes"""
 	for child: Node in node.get_children():
 		if child is Control:
 			# For buttons and other interactive controls, connect their focus signals
@@ -1022,8 +1019,8 @@ func _recursive_setup_focus_forwarding(node: Node, root_item: Control):
 		_recursive_setup_focus_forwarding(child, root_item)
 
 
+## Handle when a child control gains focus
 func _on_child_focus_entered(child: Control, root_item: Control) -> void:
-	"""Handle when a child control gains focus"""
 	if preserve_focus:
 		var data_index: int = _get_data_index_for_item(root_item)
 		if data_index != -1:
@@ -1031,12 +1028,11 @@ func _on_child_focus_entered(child: Control, root_item: Control) -> void:
 			current_real_focused_item = root_item
 
 
+## Handle when a child button is pressed
 func _on_child_button_pressed(button: Control, root_item: Control) -> void:
-	"""Handle when a child button is pressed"""
 	# Ensure the list item maintains focus logic even when child is clicked
 	if preserve_focus:
 		var data_index: int = _get_data_index_for_item(root_item)
 		if data_index != -1:
 			_set_virtual_focus(data_index)
 			current_real_focused_item = root_item
-
