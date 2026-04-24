@@ -1,18 +1,16 @@
-[gd_scene load_steps=4 format=3 uid="uid://ciwq8siqk71qj"]
+[gd_scene format=3 uid="uid://ciwq8siqk71qj"]
 
 [ext_resource type="Script" uid="uid://ccst4mj4wxo36" path="res://addons/lazy_list_box/lazy_list_box.gd" id="1_rsbt8"]
-[ext_resource type="PackedScene" uid="uid://cphtvc0soyija" path="res://test_button.tscn" id="2_80q5u"]
 [ext_resource type="Script" uid="uid://bdw8pcy5k4fen" path="res://addons/lazy_list_box/scroll_overlay.gd" id="2_wdy25"]
 
-[node name="LazyListBox" type="Control"]
+[node name="LazyListBox" type="Control" unique_id=1005123259]
 layout_mode = 3
 anchors_preset = 0
 offset_right = 148.0
 offset_bottom = 68.0
 script = ExtResource("1_rsbt8")
-item_template = ExtResource("2_80q5u")
 
-[node name="MarginContainer" type="MarginContainer" parent="."]
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=1540991088]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -20,25 +18,25 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer" unique_id=1336228752]
 layout_mode = 2
 
-[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/HBoxContainer"]
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/HBoxContainer" unique_id=1593105738]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/HBoxContainer/MarginContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/HBoxContainer/MarginContainer" unique_id=326056435]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="VOverlayScrollBar" type="VScrollBar" parent="MarginContainer/HBoxContainer/MarginContainer"]
+[node name="VOverlayScrollBar" type="VScrollBar" parent="MarginContainer/HBoxContainer/MarginContainer" unique_id=782451350]
 unique_name_in_owner = true
 modulate = Color(1, 1, 1, 0)
 layout_mode = 2
 size_flags_horizontal = 1
 script = ExtResource("2_wdy25")
 
-[node name="VScrollBar" type="VScrollBar" parent="MarginContainer/HBoxContainer"]
+[node name="VScrollBar" type="VScrollBar" parent="MarginContainer/HBoxContainer" unique_id=1862469661]
 unique_name_in_owner = true
 layout_mode = 2
