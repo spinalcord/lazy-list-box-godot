@@ -1,6 +1,11 @@
 ![Example 1](screenshots/1.gif)
 # LazyListBox for Godot 4.4+
 
+
+> [!WARNING]  
+> Ignore this if you are using Godot <= 4.4. Else If Godot >= 4.5: 
+> **New workflow is upcoming**: Checkout the ![Poll Request](https://github.com/spinalcord/lazy-list-box-godot/tree/Using-Godot-4.5-features-(Abstract-Class)). The new workflow uses abstract classes and introduces LazyAction.
+
 A high-performance List-Box control that can handle 
 thousands of items by recycling a small pool of UI 
 elements and only displaying what's currently visible
