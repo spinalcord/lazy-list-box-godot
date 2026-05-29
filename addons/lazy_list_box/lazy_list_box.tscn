@@ -9,6 +9,10 @@ anchors_preset = 0
 offset_right = 148.0
 offset_bottom = 68.0
 script = ExtResource("1_rsbt8")
+auto_calculate_visible_count = null
+visible_item_count = null
+hide_scroll_bar = null
+force_scroll_reset = null
 
 [node name="MarginContainer" type="MarginContainer" parent="." unique_id=1540991088]
 layout_mode = 1

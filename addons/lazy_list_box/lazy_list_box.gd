@@ -1,26 +1,35 @@
 class_name LazyListBox
 extends Control
 
-# Signal emitted when LazyListBox is fully ready for use
+## Signal emitted when LazyListBox is fully ready for use
 signal fully_ready
-# Signal emitted when new item is created
+## Signal emitted when new item is created
 signal item_created(item: Control)
+## Signal bubbled up from any list item. Emit item_event inside your template with LazyAction.Emit
+## Then connect here e.g. `lazy_list_box.item_event.connect(func(index, data, action): ...)`.
+## This approach helps to separate design from logic.
+## CRITICAL: You need to emit this signal in your item template to use this feature.
+signal item_event(index: int, data: Variant, action: LazyAction.Emit)
+## Signal emitted when the list transitions from having items to being empty
+signal list_became_empty
+## Signal emitted when the list transitions from being empty to having items
+signal list_became_populated
 
-# Configuration properties
+## Apperance of your item ("Data Template"
 @export var item_template: PackedScene
 ## Automatically calculates the amount of items that fit in the container
 @export var auto_calculate_visible_count: bool = true
 ## Will be calculated automatically if `auto_calculate_visible_count` is false
 @export var visible_item_count: int = 10
 ## Hide ScrollBar.
-@export var hide_scroll_bar: bool = true:
+@export var hide_scroll_bar: bool = false:
 	set(value):
 		if scroll_bar != null:
-			scroll_bar.visible = value
+			scroll_bar.visible = !value
 		else:
-			ready.connect(func() -> void: scroll_bar.visible = value, CONNECT_ONE_SHOT)
+			ready.connect(func() -> void: scroll_bar.visible = !value, CONNECT_ONE_SHOT)
 	get:
-		return scroll_bar.visible
+		return !scroll_bar.visible
 
 ## Force scroll position reset when setting data, even if item count is identical
 @export var force_scroll_reset: bool = false
@@ -53,8 +62,7 @@ var last_known_focused_owner: Control = null
 # Cache frequently used values
 var data_size: int = 0
 var viewport_cache: Viewport = null
-# OPTIMIZATION: Method caching to avoid repeated has_method() calls
-var method_cache: Dictionary = { }
+
 var _action_handlers: Dictionary[StringName, Callable] = {
 	&"ui_down": _handle_down_input,
 	&"ui_up": _handle_up_input,
@@ -76,12 +84,9 @@ var _action_handlers: Dictionary[StringName, Callable] = {
 func _ready():
 	assert(item_template != null, "Item Template is missing.")
 
-	# Create a temporary instance to check methods
-	var temp_instance = item_template.instantiate()
-	# Check if required methods exist
-	assert(temp_instance.has_method("configure_item"), "Your ItemTemplate needs a script with this function: `func configure_item(index: int, data):`")
-
-	# Clean up the temporary instance
+	# Verify that the template extends LazyListItem (abstract class guarantees configure_item)
+	var temp_instance: Node = item_template.instantiate()
+	assert(temp_instance is LazyListItem, "Your ItemTemplate must extend from LazyListItem`")
 	temp_instance.queue_free()
 
 	# Cache viewport reference
@@ -311,7 +316,9 @@ func _calculate_visible_item_count() -> void:
 
 	if item_height > 0.0:
 		var available_height: float = size.y
-		var new_visible_count: int = maxi(1, int(available_height / item_height))
+		# Account for VBoxContainer separation: N items occupy N*item_height + (N-1)*separation
+		var separation: float = float(content_container.get_theme_constant("separation"))
+		var new_visible_count: int = maxi(1, int((available_height + separation) / (item_height + separation)))
 
 		if new_visible_count != visible_item_count:
 			visible_item_count = new_visible_count
@@ -587,6 +594,10 @@ func _focus_neighbor_node(neighbor_path: NodePath) -> bool:
 	if not neighbor or not neighbor.can_process():
 		return false
 
+	# Prevent focusing the neighbor if it is currently invisible in the tree
+	if neighbor is Control and not neighbor.is_visible_in_tree():
+		return false
+
 	neighbor.grab_focus()
 	return true
 
@@ -776,8 +787,15 @@ func _get_data_index_for_item(item: Control) -> int:
 ## Internal method to set data when fully initialized
 func _internal_set_data(new_data: Array) -> void:
 	var prev_size: int = data_size
+	var new_size: int = new_data.size()
+	
 	data = new_data
-	data_size = new_data.size() # Cache size for performance
+	data_size = new_size # Cache size for performance
+
+	if prev_size > 0 and new_size == 0:
+		list_became_empty.emit()
+	elif prev_size == 0 and new_size > 0:
+		list_became_populated.emit()
 
 	# Only clear focus if the index is no longer valid for the new data size
 	if virtual_focused_data_index >= data_size:
@@ -829,6 +847,10 @@ func _create_item_pool() -> void:
 		# Connect focus signals for virtual focus management
 		item.focus_entered.connect(_on_item_focus_entered.bind(item))
 		item.focus_exited.connect(_on_item_focus_exited.bind(item))
+		# Bubble item_selected signal up to LazyListBox
+		var list_item: LazyListItem = item as LazyListItem
+		if list_item:
+			list_item.item_event.connect(func(index: int, data: Variant, action: LazyAction.Emit) -> void: item_event.emit(index, data, action))
 		content_container.add_child(item)
 		item_pool[i] = item
 		# Tell the ui that a new item exists
@@ -938,18 +960,13 @@ func _refresh_visible_items() -> void:
 
 
 ## Configure an item with data - now includes child focus setup
-func _configure_item(item: Control, index: int, item_data) -> void:
-	var script: Variant = item.get_script() #Make call once
-	var key = script if script else item.get_class()
+func _configure_item(item: Control, index: int, item_data: Variant) -> void:
+	# Cast is safe because _ready() asserts the template extends LazyListItem
+	var list_item: LazyListItem = item as LazyListItem
+	if list_item:
+		list_item.configure_item(index, item_data)
 
-	if not method_cache.has(key):
-		method_cache[key] = &"configure_item" if item.has_method(&"configure_item") else null
-
-	var method_name = method_cache[key]
-	if method_name:
-		item.call(method_name, index, item_data)
-
-	# NEW: Set up child focus forwarding
+	# Set up child focus forwarding
 	_setup_child_focus_forwarding(item)
 
 
@@ -965,7 +982,6 @@ func _clear_all_items() -> void:
 			content_container.get_child(0).queue_free()
 
 	item_pool.clear()
-	method_cache.clear() # Clear method cache when clearing items
 
 
 # ============================================================

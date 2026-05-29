@@ -1,0 +1,24 @@
+[gd_scene format=3 uid="uid://ddw2sr4yo4cg7"]
+
+[ext_resource type="Script" uid="uid://hrwqdtqy8eg1" path="res://addons/lazy_list_box/demo/demo_item_template.gd" id="1_cuk6f"]
+
+[node name="DemoItemTemplate" type="Button" unique_id=191391777]
+custom_minimum_size = Vector2(0, 50)
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = -897.0
+offset_bottom = -589.0
+grow_horizontal = 2
+grow_vertical = 2
+flat = true
+script = ExtResource("1_cuk6f")
+
+[node name="Button" type="Button" parent="." unique_id=2119448952]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
