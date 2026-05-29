@@ -1,0 +1,48 @@
+[gd_scene format=3 uid="uid://bshhu3r4ext0g"]
+
+[ext_resource type="PackedScene" uid="uid://ciwq8siqk71qj" path="res://addons/lazy_list_box/lazy_list_box.tscn" id="1_l30bn"]
+[ext_resource type="Script" uid="uid://dtvldcybqlj1u" path="res://addons/lazy_list_box/demo/demo_fake_data.gd" id="2_uksqp"]
+[ext_resource type="PackedScene" uid="uid://ddw2sr4yo4cg7" path="res://addons/lazy_list_box/demo/demo_item_template.tscn" id="3_vi45l"]
+
+[node name="Demo" type="CanvasLayer" unique_id=1127241555]
+
+[node name="AddFakeData" type="Node" parent="." unique_id=416743667]
+script = ExtResource("2_uksqp")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="." unique_id=7694529]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="LazyListBox" parent="HBoxContainer" unique_id=1005123259 instance=ExtResource("1_l30bn")]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+item_template = ExtResource("3_vi45l")
+auto_calculate_visible_count = true
+visible_item_count = 10
+hide_scroll_bar = false
+force_scroll_reset = false
+
+[node name="VBoxContainer" type="VBoxContainer" parent="HBoxContainer" unique_id=1344398895]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="HelpLabel" type="RichTextLabel" parent="HBoxContainer/VBoxContainer" unique_id=8365635]
+custom_minimum_size = Vector2(0, 150)
+layout_mode = 2
+size_flags_vertical = 3
+size_flags_stretch_ratio = 0.0
+bbcode_enabled = true
+text = "[b]This demo shows[/b]
+- Adding Fake Data
+- Test two events: button pressed and mouse right click
+"
+
+[node name="OutputLabel" type="Label" parent="HBoxContainer/VBoxContainer" unique_id=230462284]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
