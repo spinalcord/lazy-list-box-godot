@@ -10,7 +10,7 @@ var item_index: int = -1
 # This allows lazy_list_box.item_event.connect(func(index, data, action): ...).
 # Use this if you want to separate design from logic rather than handling logic in the same
 # scope where your lazy_list_box instance is.
-signal item_event(index: int, data: Variant, action: LazyAction)
+signal item_event(index: int, data: Variant, action: LazyAction.Emit)
 
-# it runs for every visible item on every scroll step. We need this to refresh displayed data
+# Called on assignment and explicit refresh, not on every pixel of scrolling.
 @abstract func configure_item(index: int, data: Variant) -> void

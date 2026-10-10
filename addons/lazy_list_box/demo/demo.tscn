@@ -21,10 +21,6 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 item_template = ExtResource("3_vi45l")
-auto_calculate_visible_count = true
-visible_item_count = 10
-hide_scroll_bar = false
-force_scroll_reset = false
 
 [node name="VBoxContainer" type="VBoxContainer" parent="HBoxContainer" unique_id=1344398895]
 layout_mode = 2
@@ -37,8 +33,13 @@ size_flags_vertical = 3
 size_flags_stretch_ratio = 0.0
 bbcode_enabled = true
 text = "[b]This demo shows[/b]
-- Adding Fake Data
-- Test two events: button pressed and mouse right click
+- 500 rows, recycled in a native ScrollContainer
+- Mouse wheel / scrollbar: pixel scrolling
+- Arrows, Home/End, Page Up/Down: focus navigation
+- Click / right-click: item events
+- Touch: drag over buttons, release for inertia, touch to stop
+- Desktop touch test: enable Emulate Touch From Mouse
+  in Project Settings and restart (see README)
 "
 
 [node name="OutputLabel" type="Label" parent="HBoxContainer/VBoxContainer" unique_id=230462284]

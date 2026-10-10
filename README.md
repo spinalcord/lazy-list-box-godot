@@ -13,24 +13,24 @@ https://www.youtube.com/watch?v=DwB_O6uEPPg
 ## Mnemonic
 ```mermaid
 sequenceDiagram
-    participant UI as UI Instance
-    participant LLB as LazyListBox
-    participant IT as Item Template
-    UI->>LLB: set_data(Array)
-    loop list box scrolling
-        LLB->>IT: configure_item(index, data)
-    end
-    Note over IT: User stops scrolling
-    Note over IT: User clicks Button
-    IT->>LLB: item_event(index, data, action)
-    LLB->>UI: item_event (Bubbled)
+	participant UI as UI Instance
+	participant LLB as LazyListBox
+	participant IT as Item Template
+	UI->>LLB: set_data(Array)
+	loop new data indices enter the pool
+		LLB->>IT: configure_item(index, data)
+	end
+	Note over IT: User stops scrolling
+	Note over IT: User clicks Button
+	IT->>LLB: item_event(index, data, action)
+	LLB->>UI: item_event (Bubbled)
 ```
 
 
 ## Features
 - Lazy loading items
-- Auto-calculation of visible items (or use a fixed value)
-- Synchronized scrollbar
+- Automatic viewport capacity (or a manual minimum pool capacity)
+- Pixel scrolling with a native ScrollContainer, touch dragging and inertia
 - Focus management with keyboard navigation
 - Recycling/Caching items
 - Built-in event bubbling via `LazyAction.Emit`, one connection handles the whole list
@@ -85,7 +85,7 @@ func _ready() -> void:
 
 
 # Called by LazyListBox each time this pooled item is (re-)assigned to a data entry.
-# Keep this fast, it runs for every visible item on every scroll step.
+# Keep this fast; it runs on assignment and explicit refresh.
 func configure_item(index: int, data: Variant) -> void:
 	item_index = index
 	item_data = data
@@ -203,3 +203,28 @@ func _on_item_event(index: int, data: Variant, action: LazyAction.Emit) -> void:
 
 **Problem**: `item_event` never fires
 - **Solution**: Make sure your template script extends `LazyListItem` (not just `Button` or `Control`) and that you emit `item_event` from inside it. `LazyListBox` only bubbles events that originate from `LazyListItem` nodes in its pool.
+
+**Problem**: Touch is not working
+**Solution**:
+Touch uses Godot's native dragging and deceleration. On mobile, keep
+`input_devices/pointing/emulate_mouse_from_touch` enabled. For desktop testing,
+enable `input_devices/pointing/emulate_touch_from_mouse` in Project Settings
+and restart the project. The addon never changes these global settings.
+See the [Godot ScrollContainer documentation](https://docs.godotengine.org/en/4.5/classes/class_scrollcontainer.html).
+
+The list changes template controls with mouse filter STOP to PASS, and sets
+buttons to trigger on release. Native scroll-begin notifications cancel a button
+press when dragging starts. Use `pressed` for actions, not `button_down`.
+Custom controls must let drag input propagate; controls added dynamically by a
+template should use PASS too. `item_created` can customize newly created rows.
+
+## Verification
+
+Run `godot --headless --path . --script tests/test_list.gd` for regression checks.
+Run `godot --path . --script tests/test_pointer.gd` for native pointer checks in
+an actual window (the test enables touch emulation only for its own process).
+
+For manual acceptance in the demo: scroll with wheel and scrollbar, tap a row,
+drag starting on a button and release, observe inertia, then touch again to stop
+it. A drag must not emit a selection. Repeat with a hidden scrollbar and resize
+the window. Run the same gestures on a physical Android/iOS device before shipping.
