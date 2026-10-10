@@ -15,6 +15,6 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 [application]
 
 config/name="lazy-list-box-godot"
-run/main_scene="uid://b846umwddnxle"
-config/features=PackedStringArray("4.6", "Forward Plus")
+run/main_scene="uid://bshhu3r4ext0g"
+config/features=PackedStringArray("4.7", "Forward Plus")
 config/icon="res://icon.svg"
