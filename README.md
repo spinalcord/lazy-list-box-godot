@@ -8,8 +8,6 @@ on screen instead of creating individual controls for
 every data entry, creating the illusion that you're scrolling
 through thousands of actual items. Leave a Star if you will ⭐
 
-https://www.youtube.com/watch?v=DwB_O6uEPPg
-
 ## Mnemonic
 ```mermaid
 sequenceDiagram
