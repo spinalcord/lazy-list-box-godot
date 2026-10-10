@@ -23,4 +23,3 @@ func configure_item(index: int, data: Variant) -> void:
 	item_data = data
 	button.text = str(data)
 #endregion
-
