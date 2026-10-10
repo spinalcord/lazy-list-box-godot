@@ -45,6 +45,13 @@ sequenceDiagram
 - Open your "Main Scene" and create a `CanvasLayer`, then drop the `lazy_list_box.tscn` into it.
 - You will see a `LazyListBox` control.
 
+Instantiating `res://addons/lazy_list_box/lazy_list_box.tscn` is recommended.
+You can also use **Add Child Node** or `LazyListBox.new()`: at runtime, the list
+reuses existing `ScrollContainer/Content` nodes and creates any missing ones
+with the scene defaults. This emits one warning per initialization when nodes
+are created. The outer control keeps its position and size; set its layout as
+needed. You must still assign `item_template` before the list enters the tree.
+
 ## Step 2: Prepare your Item Template
 Create an `item_template.tscn`. The root node can be any `Control`, but a `Button` is recommended so focus calls work properly out of the box.
 

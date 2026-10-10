@@ -34,12 +34,14 @@ var preserve_focus: bool = true
 var _assigned: Dictionary = {}
 var _updating: bool = false
 var _parking_focus: bool = false
+var _hover_update_pending: bool = false
 
-@onready var scroll_container: ScrollContainer = %ScrollContainer
-@onready var content_container: Control = %Content
-@onready var scroll_bar: VScrollBar = scroll_container.get_v_scroll_bar()
+var scroll_container: ScrollContainer
+var content_container: Control
+var scroll_bar: VScrollBar
 
 func _ready() -> void:
+	_resolve_internal_nodes()
 	focus_mode = Control.FOCUS_ALL
 	_update_scroll_mode()
 	scroll_bar.value_changed.connect(func(_value: float): _update_items())
@@ -65,6 +67,30 @@ func _ready() -> void:
 	_layout()
 	fully_ready.emit()
 
+func _resolve_internal_nodes() -> void:
+	var created := false
+	scroll_container = get_node_or_null("ScrollContainer") as ScrollContainer
+	if scroll_container == null:
+		scroll_container = ScrollContainer.new()
+		scroll_container.name = "ScrollContainer"
+		scroll_container.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		add_child(scroll_container)
+		scroll_container.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		scroll_container.grow_horizontal = Control.GROW_DIRECTION_BOTH
+		scroll_container.grow_vertical = Control.GROW_DIRECTION_BOTH
+		created = true
+	content_container = scroll_container.get_node_or_null("Content") as Control
+	if content_container == null:
+		content_container = Control.new()
+		content_container.name = "Content"
+		content_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		content_container.mouse_filter = Control.MOUSE_FILTER_PASS
+		scroll_container.add_child(content_container)
+		created = true
+	scroll_bar = scroll_container.get_v_scroll_bar()
+	if created:
+		push_warning("LazyListBox: Internal nodes were created at runtime. Prefer instantiating res://addons/lazy_list_box/lazy_list_box.tscn instead of using Add Child Node or LazyListBox.new().")
+
 func _update_scroll_mode() -> void:
 	scroll_container.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER if hide_scroll_bar else ScrollContainer.SCROLL_MODE_AUTO
 
@@ -85,6 +111,7 @@ func _measure_height() -> void:
 	assert(item_template != null, "Assign an item_template extending LazyListItem.")
 	var sample := item_template.instantiate() as LazyListItem
 	assert(sample != null, "The template must extend LazyListItem.")
+	sample.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
 	content_container.add_child(sample)
 	sample.size.x = content_container.size.x
 	item_height = maxf(1.0, sample.get_combined_minimum_size().y)
@@ -210,6 +237,19 @@ func _update_items(reconfigure: bool = false) -> void:
 	for index in range(first, last + 1):
 		active_items.append(_assigned[index])
 	_updating = false
+	_queue_hover_update()
+
+func _queue_hover_update() -> void:
+	if _hover_update_pending:
+		return
+	_hover_update_pending = true
+	# Wait for native scrolling and deferred container layout to settle.
+	get_tree().process_frame.connect(_update_hover, CONNECT_DEFERRED | CONNECT_ONE_SHOT)
+
+func _update_hover() -> void:
+	_hover_update_pending = false
+	if is_inside_tree():
+		get_viewport().update_mouse_cursor_state()
 
 func refresh() -> void:
 	if is_fully_initialized:
