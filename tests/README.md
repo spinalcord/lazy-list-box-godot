@@ -15,6 +15,11 @@ checks layout, recycling and focus. Expect exactly two runtime-fallback warnings
 one in `direct` and one in `missing_content`, with no further warnings during
 scrolling or refresh and none in `scene` or `existing_children`.
 
+The list suite also checks `refresh_item()` on visible and buffer rows, exact
+configuration counts, later assignment of changed off-pool data, invalid indices,
+empty lists and calls before initialization. It checks that targeted refreshes
+preserve row layout, pool assignments, pixel scroll position and real/virtual focus.
+
 The pointer suite opens a real window and injects events through its Viewport.
 It enables touch emulation only in that test process. It checks taps, wheel,
 scrollbar dragging, drags over recycled buttons, inertia and interruption,

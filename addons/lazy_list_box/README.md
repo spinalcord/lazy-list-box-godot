@@ -172,11 +172,26 @@ func _on_item_event(index: int, data: Variant, action: LazyAction.Emit) -> void:
 
 ### Basic Operations
 - `set_data(data_array: Array)`, Set the data and refresh array size changes.
+- `refresh_item(index: int) -> void`, Re-runs `configure_item` exactly once for the assigned row at this index, including buffer rows, without changing layout, scroll position or focus.
 - `refresh()`, Re-runs `configure_item` for visible items without scrolling. Use this when an existing data object changes (e.g. an inventory amount) and you want the UI to reflect it.
 > [!IMPORTANT]
-> `refresh()` only works for modifying existing data objects, not for adding/removing items from the array, use `set_data()` for array size changes.
+> `refresh()` and `refresh_item()` update existing entries. Use `set_data()` for array size changes.
 - `scroll_to_index(index: int)`, Scroll to a specific data index.
 - `scroll_to_end()`, Scroll to the end of the list.
+
+Update the existing data first, then refresh its row:
+
+```gdscript
+lazy_list.data[index] = "Updated item"
+lazy_list.refresh_item(index)
+```
+
+`refresh_item()` does nothing before initialization, for invalid indices, or when
+an entry has no assigned pool row. When that entry later enters the pool, its
+row uses the current data automatically. List management takes expected O(1)
+time, plus your template's `configure_item()` cost: it performs a direct lookup
+without scanning or copying the data or updating other rows. This guarantee
+applies to `refresh_item()`, not to the array copy during initialization.
 
 ### Focus Management
 - `focus_item_at_data_index(index: int)`, Focus item at data index.

@@ -304,6 +304,14 @@ func refresh() -> void:
 		_layout()
 		_update_items(true)
 
+func refresh_item(index: int) -> void:
+	if not is_fully_initialized or index < 0 or index >= data_size:
+		return
+	var item: LazyListItem = _assigned.get(index)
+	if item != null:
+		item.item_data = data[index]
+		item.configure_item(index, data[index])
+
 func scroll_to_index(index: int) -> void:
 	if is_fully_initialized:
 		scroll_bar.value = clampi(index, 0, maxi(0, data_size - 1)) * _stride()

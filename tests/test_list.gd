@@ -18,7 +18,71 @@ func frames() -> void:
 	await process_frame
 func _initialize() -> void:
 	run.call_deferred()
+func test_refresh_item() -> void:
+	var list: LazyListBox = load("res://addons/lazy_list_box/lazy_list_box.tscn").instantiate()
+	list.item_template = load("res://tests/test_item.tscn")
+	list.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
+	list.size = Vector2(320, 125)
+	list.set_data(range(10000))
+	list.refresh_item(0)
+	list.refresh_item(-1)
+	list.refresh_item(10000)
+	check(list.item_pool.is_empty() and list._assigned.is_empty() and list.has_pending_data, "refresh_item before initialization does nothing")
+	root.add_child(list)
+	await list.fully_ready
+	await frames()
+	list.scroll_to_index(500)
+	list.scroll_bar.value += 10
+	list.focus_item_at_data_index(501)
+	await frames()
+	var scroll_position := list.scroll_bar.value
+	var focus_owner := root.gui_get_focus_owner()
+	var focused_index := list.get_virtual_focused_index()
+	var pool := list.item_pool.duplicate()
+	var assignments := list._assigned.duplicate()
+	var positions: Dictionary = {}
+	var counts: Dictionary = {}
+	for item in pool:
+		counts[item] = item.configurations
+		positions[item] = item.position
+	var visible_index := list.get_visible_range().x + 1
+	var buffer_index := list.get_visible_range().x - 1
+	check(list._assigned.has(buffer_index), "refresh_item test has an assigned buffer row")
+	for index in [visible_index, buffer_index]:
+		list.data[index] = "updated " + str(index)
+		list.refresh_item(index)
+		var refreshed: LazyListItem = list._assigned[index]
+		check(refreshed.item_data == list.data[index] and refreshed.get_node("Button").text == list.data[index], "refresh_item updates displayed data at " + str(index))
+		for item in pool:
+			check(item.configurations == counts[item] + (1 if item == refreshed else 0), "refresh_item configures only the target once")
+			counts[item] = item.configurations
+	var outside_index := 9000
+	check(not list._assigned.has(outside_index), "refresh_item test entry is outside pool")
+	list.data[outside_index] = "updated outside pool"
+	list.refresh_item(outside_index)
+	list.refresh_item(-1)
+	list.refresh_item(list.data_size)
+	list.refresh_item(list.data_size + 100)
+	for item in pool:
+		check(item.configurations == counts[item], "unassigned and invalid refresh_item do not configure")
+		check(item.position == positions[item], "refresh_item preserves row layout")
+	check(list.item_pool == pool and list._assigned == assignments, "refresh_item preserves pool and assignments")
+	check(list.scroll_bar.value == scroll_position, "refresh_item preserves pixel scroll position")
+	check(root.gui_get_focus_owner() == focus_owner and list.get_virtual_focused_index() == focused_index, "refresh_item preserves real and virtual focus")
+	await frames()
+	for item in pool:
+		check(item.configurations == counts[item], "refresh_item does not defer extra configurations")
+	list.scroll_to_index(outside_index)
+	var revealed: LazyListItem = list._assigned[outside_index]
+	check(revealed.item_data == list.data[outside_index] and revealed.get_node("Button").text == list.data[outside_index], "later assignment uses current data after unassigned refresh_item")
+	list.set_data([])
+	list.refresh_item(0)
+	list.refresh_item(-1)
+	check(list.item_pool.is_empty() and list._assigned.is_empty(), "refresh_item on empty list does nothing")
+	list.queue_free()
+	await frames()
 func run() -> void:
+	await test_refresh_item()
 	var list: LazyListBox = load("res://addons/lazy_list_box/lazy_list_box.tscn").instantiate()
 	list.item_template = load("res://tests/test_item.tscn")
 	list.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
