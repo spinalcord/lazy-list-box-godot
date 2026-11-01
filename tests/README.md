@@ -15,7 +15,13 @@ checks layout, recycling and focus. Expect exactly two runtime-fallback warnings
 one in `direct` and one in `missing_content`, with no further warnings during
 scrolling or refresh and none in `scene` or `existing_children`.
 
-The list suite also checks `refresh_item()` on visible and buffer rows, exact
+The list suite checks all four `scroll_to_index()` alignments with row spacing,
+nearest-edge scrolling for fully/partly visible rows and rows taller than the
+viewport, boundary clamping, short/empty lists and calls before initialization
+or with zero viewport height. Repeated alignment must not configure rows again.
+Single-entry lists are checked with rows shorter than, equal to and taller than
+the viewport, including all alignments and invalid indices.
+It also checks `refresh_item()` on visible and buffer rows, exact
 configuration counts, later assignment of changed off-pool data, invalid indices,
 empty lists and calls before initialization. It checks that targeted refreshes
 preserve row layout, pool assignments, pixel scroll position and real/virtual focus.

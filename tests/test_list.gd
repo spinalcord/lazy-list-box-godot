@@ -81,7 +81,102 @@ func test_refresh_item() -> void:
 	check(list.item_pool.is_empty() and list._assigned.is_empty(), "refresh_item on empty list does nothing")
 	list.queue_free()
 	await frames()
+func check_scroll(list: LazyListBox, index: int, alignment: LazyListBox.ScrollAlignment, expected: float, context: String) -> void:
+	list.scroll_to_index(index, alignment)
+	check(is_equal_approx(list.scroll_bar.value, expected), context + ": expected " + str(expected) + ", got " + str(list.scroll_bar.value))
+	check_visible_rows(list, context)
+	var counts: Dictionary = {}
+	for item in list.item_pool:
+		counts[item] = item.configurations
+	list.scroll_to_index(index, alignment)
+	await frames()
+	for item in list.item_pool:
+		check(counts.has(item) and item.configurations == counts[item], context + ": repeated alignment does not configure rows")
+
+func test_scroll_alignment() -> void:
+	var list: LazyListBox = load("res://addons/lazy_list_box/lazy_list_box.tscn").instantiate()
+	list.item_template = load("res://tests/test_item.tscn")
+	list.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
+	list.size = Vector2(320, 120)
+	var custom_theme := Theme.new()
+	custom_theme.set_constant("separation", "VBoxContainer", 20)
+	list.theme = custom_theme
+	list.set_data(range(100))
+	var alignments := [LazyListBox.ALIGN_TOP, LazyListBox.ALIGN_CENTER, LazyListBox.ALIGN_BOTTOM, LazyListBox.ALIGN_NEAREST]
+	for alignment in alignments:
+		list.scroll_to_index(10, alignment)
+	check(list.scroll_bar == null and list.item_pool.is_empty() and list.has_pending_data, "scroll alignment before initialization does nothing")
+	root.add_child(list)
+	await list.fully_ready
+	await frames()
+	check(list.item_height == 50 and list._viewport_height() == 120 and list._stride() == 70, "alignment fixture has row spacing and known viewport")
+	for entry in [[LazyListBox.ALIGN_TOP, 700.0], [LazyListBox.ALIGN_CENTER, 665.0], [LazyListBox.ALIGN_BOTTOM, 630.0], [LazyListBox.ALIGN_NEAREST, 630.0]]:
+		list.scroll_bar.value = 0
+		await check_scroll(list, 10, entry[0], entry[1], "middle row alignment " + str(entry[0]))
+	list.scroll_to_index(10)
+	check(list.scroll_bar.value == 700, "omitted alignment still aligns at top")
+	for entry in [[690, 690], [710, 700], [620, 630], [900, 700], [500, 630], [700, 700], [630, 630], [750, 700]]:
+		list.scroll_bar.value = entry[0]
+		await check_scroll(list, 10, LazyListBox.ALIGN_NEAREST, entry[1], "nearest from " + str(entry[0]))
+	for alignment in alignments:
+		for index in [0, -100]:
+			list.scroll_bar.value = 700
+			await check_scroll(list, index, alignment, 0, "first/clamped negative index " + str(alignment))
+		for index in [99, 1000]:
+			list.scroll_bar.value = 0
+			await check_scroll(list, index, alignment, 6860, "last/clamped excessive index " + str(alignment))
+	check(list.get_virtual_focused_index() == -1, "scroll alignment does not select or focus an entry")
+	list.set_data([0])
+	for height in [50, 120, 200]:
+		list.set_manual_item_height(height)
+		await frames()
+		var maximum := maxf(0, height - 120)
+		for alignment in alignments:
+			var expected := 0.0
+			if alignment == LazyListBox.ALIGN_CENTER:
+				expected = maximum / 2.0
+			elif alignment == LazyListBox.ALIGN_BOTTOM or alignment == LazyListBox.ALIGN_NEAREST:
+				expected = maximum
+			for index in [-100, 0, 100]:
+				list.scroll_bar.value = maximum
+				await check_scroll(list, index, alignment, expected, "single row height " + str(height) + ", index " + str(index) + ", alignment " + str(alignment))
+		list.scroll_bar.value = maximum
+		list.scroll_to_index(0)
+		check(list.scroll_bar.value == 0, "single row default alignment at height " + str(height))
+		check(list.item_pool.size() == 1 and list.get_visible_range() == Vector2i(0, 0), "single row stays visible with exactly one pooled item")
+	list.set_manual_item_height(50)
+	list.set_data([0, 1])
+	await frames()
+	for alignment in alignments:
+		await check_scroll(list, 1, alignment, 0, "short list " + str(alignment))
+	list.set_data(range(100))
+	list.set_manual_item_height(200)
+	await frames()
+	for entry in [[LazyListBox.ALIGN_TOP, 2200.0], [LazyListBox.ALIGN_CENTER, 2240.0], [LazyListBox.ALIGN_BOTTOM, 2280.0]]:
+		await check_scroll(list, 10, entry[0], entry[1], "tall row alignment " + str(entry[0]))
+	for entry in [[2240, 2240], [2200, 2200], [2280, 2280], [2180, 2200], [2300, 2280], [1900, 2200], [2600, 2280]]:
+		list.scroll_bar.value = entry[0]
+		await check_scroll(list, 10, LazyListBox.ALIGN_NEAREST, entry[1], "nearest tall row from " + str(entry[0]))
+	# Inspect the zero-height guard before native deferred layout can change the range.
+	list.scroll_container.size.y = 0
+	check(list._viewport_height() == 0, "alignment fixture has a zero-height viewport")
+	var position := list.scroll_bar.value
+	var assignments := list._assigned.duplicate()
+	for alignment in alignments:
+		list.scroll_to_index(50, alignment)
+	check(list.scroll_bar.value == position and list._assigned == assignments, "zero viewport alignment does nothing")
+	list.size.y = 120
+	list.scroll_container.size.y = 120
+	list.set_data([])
+	await frames()
+	for alignment in alignments:
+		list.scroll_to_index(10, alignment)
+	check(list.scroll_bar.value == 0 and list.item_pool.is_empty(), "empty list alignment does nothing")
+	list.queue_free()
+	await frames()
+
 func run() -> void:
+	await test_scroll_alignment()
 	await test_refresh_item()
 	var list: LazyListBox = load("res://addons/lazy_list_box/lazy_list_box.tscn").instantiate()
 	list.item_template = load("res://tests/test_item.tscn")

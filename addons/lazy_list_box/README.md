@@ -176,7 +176,7 @@ func _on_item_event(index: int, data: Variant, action: LazyAction.Emit) -> void:
 - `refresh()`, Re-runs `configure_item` for visible items without scrolling. Use this when an existing data object changes (e.g. an inventory amount) and you want the UI to reflect it.
 > [!IMPORTANT]
 > `refresh()` and `refresh_item()` update existing entries. Use `set_data()` for array size changes.
-- `scroll_to_index(index: int)`, Scroll to a specific data index.
+- `scroll_to_index(index: int, alignment: ScrollAlignment = ALIGN_TOP) -> void`, Scroll to a data index with optional alignment.
 - `scroll_to_end()`, Scroll to the end of the list.
 
 Update the existing data first, then refresh its row:
@@ -192,6 +192,33 @@ row uses the current data automatically. List management takes expected O(1)
 time, plus your template's `configure_item()` cost: it performs a direct lookup
 without scanning or copying the data or updating other rows. This guarantee
 applies to `refresh_item()`, not to the array copy during initialization.
+
+### Scroll alignment
+
+`scroll_to_index(index, alignment)` scrolls immediately without selecting an entry.
+The optional `alignment` uses the public `ScrollAlignment` enum. Its values are
+also available directly on `LazyListBox`:
+
+| Value | Behavior |
+| --- | --- |
+| `LazyListBox.ALIGN_TOP` | Align the row's top with the viewport top (default). |
+| `LazyListBox.ALIGN_CENTER` | Center the row in the viewport. |
+| `LazyListBox.ALIGN_BOTTOM` | Align the row's bottom with the viewport bottom. |
+| `LazyListBox.ALIGN_NEAREST` | Leave fully visible rows in place; otherwise scroll the shortest distance to align a row edge. |
+
+Alignment uses the row height without its trailing spacing. For rows taller
+than the viewport, `ALIGN_NEAREST` leaves the position unchanged if the row
+already covers the viewport; otherwise it aligns the nearest row edge.
+All targets are clamped to the available scroll range. Negative indices target
+the first entry and indices past the end target the last entry. Calls before
+initialization, on an empty list or with zero viewport height do nothing.
+
+```gdscript
+lazy_list.scroll_to_index(500) # Existing calls still align at the top.
+lazy_list.scroll_to_index(500, LazyListBox.ALIGN_CENTER)
+lazy_list.scroll_to_index(500, LazyListBox.ALIGN_BOTTOM)
+lazy_list.scroll_to_index(500, LazyListBox.ALIGN_NEAREST)
+```
 
 ### Focus Management
 - `focus_item_at_data_index(index: int)`, Focus item at data index.
@@ -239,7 +266,8 @@ Only visible rows and one buffer row on either side are assigned. Existing
 assignments survive scrolling; moving within the same row does not configure
 items again. Nodes are reused and the pool shrinks or grows on resize.
 
-- `scroll_to_index()` aligns the row at the top, clamped at the actual content end.
+- `scroll_to_index()` supports top (default), center, bottom and nearest alignment,
+  clamped to the available scroll range; see Scroll alignment above.
 - `scroll_to_end()` shows the last row without trailing blank space.
 - `get_visible_range()` includes partially visible rows, excludes buffers and
   returns `Vector2i(0, -1)` for an empty list.
