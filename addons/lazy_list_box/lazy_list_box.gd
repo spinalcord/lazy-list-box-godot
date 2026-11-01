@@ -66,6 +66,19 @@ signal list_became_populated
 
 #endregion
 
+#region Input Actions
+
+const INPUT_UP: StringName = &"ui_up"
+const INPUT_DOWN: StringName = &"ui_down"
+const INPUT_LEFT: StringName = &"ui_left"
+const INPUT_RIGHT: StringName = &"ui_right"
+const INPUT_HOME: StringName = &"ui_home"
+const INPUT_END: StringName = &"ui_end"
+const INPUT_PAGE_UP: StringName = &"ui_page_up"
+const INPUT_PAGE_DOWN: StringName = &"ui_page_down"
+
+#endregion
+
 #region Runtime State
 
 ## Uniform item height in pixels, measured from the template or set manually.
@@ -502,25 +515,25 @@ func _input(event: InputEvent) -> void:
 	var index := virtual_focused_data_index if has_virtual_focus else current_scroll_index
 	var target := index
 	var neighbor := NodePath()
-	if event.is_action_pressed(&"ui_down", true):
+	if event.is_action_pressed(INPUT_DOWN, true):
 		if index == data_size - 1:
 			neighbor = focus_neighbor_bottom
 		target += 1
-	elif event.is_action_pressed(&"ui_up", true):
+	elif event.is_action_pressed(INPUT_UP, true):
 		if index == 0:
 			neighbor = focus_neighbor_top
 		target -= 1
-	elif event.is_action_pressed(&"ui_left", true):
+	elif event.is_action_pressed(INPUT_LEFT, true):
 		neighbor = focus_neighbor_left
-	elif event.is_action_pressed(&"ui_right", true):
+	elif event.is_action_pressed(INPUT_RIGHT, true):
 		neighbor = focus_neighbor_right
-	elif event.is_action_pressed(&"ui_home", true):
+	elif event.is_action_pressed(INPUT_HOME, true):
 		target = 0
-	elif event.is_action_pressed(&"ui_end", true):
+	elif event.is_action_pressed(INPUT_END, true):
 		target = data_size - 1
-	elif event.is_action_pressed(&"ui_page_down", true):
+	elif event.is_action_pressed(INPUT_PAGE_DOWN, true):
 		target += maxi(1, int(_viewport_height() / _stride()))
-	elif event.is_action_pressed(&"ui_page_up", true):
+	elif event.is_action_pressed(INPUT_PAGE_UP, true):
 		target -= maxi(1, int(_viewport_height() / _stride()))
 	else:
 		return
@@ -528,7 +541,7 @@ func _input(event: InputEvent) -> void:
 		var control := get_node_or_null(neighbor) as Control
 		if control and control.is_visible_in_tree() and control.can_process():
 			control.grab_focus()
-	elif target == index and (event.is_action_pressed(&"ui_left", true) or event.is_action_pressed(&"ui_right", true)):
+	elif target == index and (event.is_action_pressed(INPUT_LEFT, true) or event.is_action_pressed(INPUT_RIGHT, true)):
 		return
 	else:
 		focus_item_at_data_index(clampi(target, 0, data_size - 1))
