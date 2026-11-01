@@ -29,7 +29,7 @@ sequenceDiagram
 
 ## Features
 - Lazy loading items
-- Automatic viewport capacity (or a manual minimum pool capacity)
+- Automatic pool sizing based on the list height
 - Pixel scrolling with a native ScrollContainer, touch dragging and inertia
 - Focus management with keyboard navigation
 - Recycling/Caching items
@@ -51,6 +51,10 @@ reuses existing `ScrollContainer/Content` nodes and creates any missing ones
 with the scene defaults. This emits one warning per initialization when nodes
 are created. The outer control keeps its position and size; set its layout as
 needed. You must still assign `item_template` before the list enters the tree.
+
+The list height determines how many rows are visible. The pool automatically
+grows or shrinks when the list is resized, including a small scrolling buffer,
+and never contains more nodes than there are data entries.
 
 ## Step 2: Prepare your Item Template
 Create an `item_template.tscn`. The root node can be any `Control`, but a `Button` is recommended so focus calls work properly out of the box.
@@ -182,7 +186,6 @@ func _on_item_event(index: int, data: Variant, action: LazyAction.Emit) -> void:
 - `grab_initial_focus()`, Focus the first available or currently scrolled-to/visible item.
 
 ### Configuration
-- `set_auto_calculate_visible_count(enabled: bool)`, Toggle auto-calculation.
 - `set_manual_item_height(height: float)`, Set manual item height.
 - `get_visible_range() -> Vector2i`, Get range of visible indices.
 
@@ -214,17 +217,12 @@ func _on_item_event(index: int, data: Variant, action: LazyAction.Emit) -> void:
 ## Scrolling, capacity and touch
 
 The outer Control contains a ScrollContainer and a plain Control content surface.
-Rows share one height, measured from the template minimum size in both modes.
+Rows share one height, measured from the template minimum size.
 The theme's `VBoxContainer/separation` remains the row spacing. Set a positive
 minimum height on the template; variable-height rows are not supported.
 Only visible rows and one buffer row on either side are assigned. Existing
 assignments survive scrolling; moving within the same row does not configure
 items again. Nodes are reused and the pool shrinks or grows on resize.
-
-With `auto_calculate_visible_count = false`, `visible_item_count` is a minimum
-pool capacity, not a limit on visible rows. The pool always fills the viewport
-and never needs more nodes than there are data entries. In automatic mode the
-property reports the viewport capacity; partial rows and buffers can need more nodes.
 
 - `scroll_to_index()` aligns the row at the top, clamped at the actual content end.
 - `scroll_to_end()` shows the last row without trailing blank space.

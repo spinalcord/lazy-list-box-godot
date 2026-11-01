@@ -8,9 +8,6 @@ signal list_became_empty
 signal list_became_populated
 
 @export var item_template: PackedScene
-@export var auto_calculate_visible_count: bool = true
-## Minimum pool capacity in manual mode; the viewport can require more rows.
-@export var visible_item_count: int = 10
 @export var hide_scroll_bar: bool = false:
 	set(value):
 		hide_scroll_bar = value
@@ -160,8 +157,6 @@ func _layout(reset: bool = false) -> void:
 	scroll_bar.page = _viewport_height()
 	scroll_bar.value = clampf(pixel_position, 0.0, maxf(0.0, _content_height() - _viewport_height()))
 	max_scroll_index = maxi(0, ceili(maxf(0.0, _content_height() - _viewport_height()) / _stride()))
-	if auto_calculate_visible_count:
-		visible_item_count = maxi(1, ceili(_viewport_height() / _stride()))
 	_updating = false
 	_update_items()
 
@@ -203,7 +198,7 @@ func _update_items(reconfigure: bool = false) -> void:
 	current_scroll_index = maxi(0, visible_range.x)
 	var first := maxi(0, visible_range.x - 1)
 	var last := mini(data_size - 1, visible_range.y + 1)
-	var capacity := mini(data_size, maxi(ceili(_viewport_height() / _stride()) + 3, 0 if auto_calculate_visible_count else visible_item_count))
+	var capacity := mini(data_size, ceili(_viewport_height() / _stride()) + 3)
 	for index: int in _assigned.keys():
 		if index < first or index > last:
 			var item: Control = _assigned[index]
@@ -376,16 +371,9 @@ func get_initialization_status() -> String:
 		return "Fully Initialized"
 	return "Initializing with Pending Data" if has_pending_data else "Initializing"
 
-func set_auto_calculate_visible_count(enabled: bool) -> void:
-	auto_calculate_visible_count = enabled
-	_layout()
-
 func set_manual_item_height(height: float) -> void:
 	item_height = maxf(1.0, height)
 	_layout()
 
 func get_item_height() -> float:
 	return item_height
-
-func get_calculated_visible_count() -> int:
-	return visible_item_count

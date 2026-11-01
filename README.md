@@ -27,7 +27,7 @@ sequenceDiagram
 
 ## Features
 - Lazy loading items
-- Automatic viewport capacity (or a manual minimum pool capacity)
+- Automatic pool sizing based on the list height
 - Pixel scrolling with a native ScrollContainer, touch dragging and inertia
 - Focus management with keyboard navigation
 - Recycling/Caching items
@@ -49,6 +49,10 @@ reuses existing `ScrollContainer/Content` nodes and creates any missing ones
 with the scene defaults. This emits one warning per initialization when nodes
 are created. The outer control keeps its position and size; set its layout as
 needed. You must still assign `item_template` before the list enters the tree.
+
+The list height determines how many rows are visible. The pool automatically
+grows or shrinks when the list is resized, including a small scrolling buffer,
+and never contains more nodes than there are data entries.
 
 ## Step 2: Prepare your Item Template
 Create an `item_template.tscn`. The root node can be any `Control`, but a `Button` is recommended so focus calls work properly out of the box.
@@ -180,7 +184,6 @@ func _on_item_event(index: int, data: Variant, action: LazyAction.Emit) -> void:
 - `grab_initial_focus()`, Focus the first available or currently scrolled-to/visible item.
 
 ### Configuration
-- `set_auto_calculate_visible_count(enabled: bool)`, Toggle auto-calculation.
 - `set_manual_item_height(height: float)`, Set manual item height.
 - `get_visible_range() -> Vector2i`, Get range of visible indices.
 
