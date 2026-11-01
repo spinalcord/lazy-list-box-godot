@@ -2,6 +2,7 @@ class_name LazyListBox
 extends Control
 
 signal fully_ready
+signal load_more_requested()
 signal item_created(item: Control)
 signal item_event(index: int, data: Variant, action: LazyAction.Emit)
 signal list_became_empty
@@ -14,6 +15,18 @@ signal list_became_populated
 		if is_node_ready():
 			_update_scroll_mode()
 @export var force_scroll_reset: bool = false
+@export var load_more_enabled: bool = false:
+	set(value):
+		load_more_enabled = value
+		_queue_load_more_check()
+@export_range(0, 2147483647, 1) var load_more_threshold: int = 10:
+	set(value):
+		load_more_threshold = maxi(0, value)
+		_queue_load_more_check()
+@export var has_more_data: bool = true:
+	set(value):
+		has_more_data = value
+		_queue_load_more_check()
 
 var item_height: float = 0.0
 var data: Array = []
@@ -32,12 +45,18 @@ var _assigned: Dictionary = {}
 var _updating: bool = false
 var _parking_focus: bool = false
 var _hover_update_pending: bool = false
+var _load_more_ready: bool = false
+var _load_more_check_pending: bool = false
+var _load_more_request_locked: bool = false
 
 var scroll_container: ScrollContainer
 var content_container: Control
 var scroll_bar: VScrollBar
 
 func _ready() -> void:
+	if item_template == null:
+		push_error("LazyListBox: Assign an item_template extending LazyListItem. If one is assigned, check resource loading errors and rescan the project in the editor.")
+		return
 	_resolve_internal_nodes()
 	focus_mode = Control.FOCUS_ALL
 	_update_scroll_mode()
@@ -63,6 +82,8 @@ func _ready() -> void:
 	await get_tree().process_frame
 	_layout()
 	fully_ready.emit()
+	_load_more_ready = true
+	_queue_load_more_check()
 
 func _resolve_internal_nodes() -> void:
 	var created := false
@@ -123,6 +144,8 @@ func set_data(new_data: Array) -> void:
 	var old_size := data_size
 	data = new_data
 	data_size = data.size()
+	if old_size != data_size:
+		_load_more_request_locked = false
 	if virtual_focused_data_index >= data_size:
 		_clear_virtual_focus()
 	_layout(force_scroll_reset)
@@ -233,6 +256,36 @@ func _update_items(reconfigure: bool = false) -> void:
 		active_items.append(_assigned[index])
 	_updating = false
 	_queue_hover_update()
+	_queue_load_more_check()
+
+# The application owns loading state and supplies each extended array via set_data().
+func reset_load_more_request() -> void:
+	_load_more_request_locked = false
+	_queue_load_more_check()
+
+func _queue_load_more_check() -> void:
+	if not _load_more_ready or not is_inside_tree() or _load_more_check_pending:
+		return
+	if not load_more_enabled or not has_more_data or _load_more_request_locked:
+		return
+	_load_more_check_pending = true
+	# Native container sorting must settle before inspecting partial visible rows.
+	get_tree().process_frame.connect(_check_load_more, CONNECT_DEFERRED | CONNECT_ONE_SHOT)
+
+func _check_load_more() -> void:
+	_load_more_check_pending = false
+	if not is_inside_tree() or not _load_more_ready or _updating:
+		return
+	if not load_more_enabled or not has_more_data or _load_more_request_locked:
+		return
+	if _viewport_height() <= 0.0 or scroll_container.size.x <= 0.0:
+		return
+	var visible_range := get_visible_range()
+	if data_size > 0 and (visible_range.y < visible_range.x or data_size - 1 - visible_range.y > load_more_threshold):
+		return
+	# Lock before emitting: a synchronous handler may set_data() and queue again.
+	_load_more_request_locked = true
+	load_more_requested.emit()
 
 func _queue_hover_update() -> void:
 	if _hover_update_pending:

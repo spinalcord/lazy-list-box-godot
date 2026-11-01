@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://ddw2sr4yo4cg7"]
 
-[ext_resource type="Script" uid="uid://hrwqdtqy8eg1" path="res://addons/lazy_list_box/demo/demo_item_template.gd" id="1_cuk6f"]
+[ext_resource type="Script" uid="uid://hrwqdtqy8eg1" path="res://addons/lazy_list_box/demos/basic_example/demo_item_template.gd" id="1_cuk6f"]
 
 [node name="DemoItemTemplate" type="Button" unique_id=191391777]
 custom_minimum_size = Vector2(0, 50)

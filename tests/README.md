@@ -5,6 +5,7 @@ Use Godot 4.5 or newer from the repository root:
 ```sh
 godot --headless --path . --script tests/test_initialization.gd
 godot --headless --path . --script tests/test_list.gd
+godot --headless --path . --script tests/test_load_more.gd
 godot --path . --rendering-method gl_compatibility --script tests/test_pointer.gd
 ```
 
@@ -26,3 +27,25 @@ moving the mouse during the suite. It does not change project settings.
 Validated locally with Godot 4.7 stable. A separate Godot 4.5 runtime was not
 available. Physical mobile-device and human gesture acceptance remain pending;
 use the demo and the checklist in the main README.
+
+The load more suite checks default-disabled loading, empty startup after
+`fully_ready`, partial rows, threshold zero, resize and zero-sized viewports.
+It checks count-based request locking, equal-size updates, refresh, synchronous
+short-page chaining, retry, and suppression when disabled or at the data end.
+It instantiates both demo scenes and runs the load more demo with
+`simulated_delay = 0.0` through its intentional page-2 error, Retry and all 250
+entries, checking preserved scroll position and bounded pool size.
+
+Open each scene for window acceptance:
+
+```sh
+godot --path . --rendering-method gl_compatibility res://addons/lazy_list_box/demos/basic_example/demo.tscn
+godot --path . --rendering-method gl_compatibility res://addons/lazy_list_box/demos/load_more_example/demo.tscn
+```
+
+In the basic demo, check the 500 entries, wheel/keyboard scrolling and item event
+output after resizing. In the load more demo, observe the initial empty state,
+loading status, 50-entry pages, the error on page 2 and the Retry button. Click
+Retry, keep scrolling, and confirm the count reaches 250 and the end status
+appears. Resize both windows and confirm labels remain readable and the list
+fills the remaining space. The basic scene remains the project main scene.

@@ -43,4 +43,3 @@ func _one_item_event(index: int, data: Variant, action: LazyAction.Emit) -> void
 		output_label.text = "Right Click: %s | data: %s" % [index, data]
 
 #endregion
-

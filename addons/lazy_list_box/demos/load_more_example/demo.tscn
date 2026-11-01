@@ -1,0 +1,67 @@
+[gd_scene format=3 uid="uid://ckqayiy6urywd"]
+
+[ext_resource type="Script" uid="uid://dsycx4ciorexk" path="res://addons/lazy_list_box/demos/load_more_example/demo.gd" id="1_fbljx"]
+[ext_resource type="PackedScene" uid="uid://ciwq8siqk71qj" path="res://addons/lazy_list_box/lazy_list_box.tscn" id="2_el5pv"]
+[ext_resource type="PackedScene" uid="uid://ddw2sr4yo4cg7" path="res://addons/lazy_list_box/demos/basic_example/demo_item_template.tscn" id="3_fbljx"]
+
+[node name="LoadMoreDemo" type="Control" unique_id=1576868345]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_fbljx")
+
+[node name="Margin" type="MarginContainer" parent="." unique_id=283419627]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="Column" type="VBoxContainer" parent="Margin" unique_id=1504092952]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="Margin/Column" unique_id=1810321670]
+layout_mode = 2
+text = "Load more on demand"
+
+[node name="Help" type="Label" parent="Margin/Column" unique_id=1346312070]
+layout_mode = 2
+text = "50 items per page. Page 2 fails once to demonstrate Retry."
+
+[node name="CountLabel" type="Label" parent="Margin/Column" unique_id=388834978]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Items: 0 / 250"
+
+[node name="StatusLabel" type="Label" parent="Margin/Column" unique_id=893040243]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Waiting for the list..."
+
+[node name="RetryButton" type="Button" parent="Margin/Column" unique_id=1680270613]
+unique_name_in_owner = true
+visible = false
+modulate = Color(0.7242828, 0.011690575, 0.3593742, 1)
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+text = "Retry (Page 2 fails once to demonstrate Retry)"
+
+[node name="LazyListBox" parent="Margin/Column" unique_id=1069087392 instance=ExtResource("2_el5pv")]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+item_template = ExtResource("3_fbljx")
+load_more_enabled = true
+
+[node name="SelectionLabel" type="Label" parent="Margin/Column" unique_id=601027210]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Click an item to select it."

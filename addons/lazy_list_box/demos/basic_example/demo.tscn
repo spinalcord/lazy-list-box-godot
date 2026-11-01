@@ -1,8 +1,8 @@
 [gd_scene format=3 uid="uid://bshhu3r4ext0g"]
 
 [ext_resource type="PackedScene" uid="uid://ciwq8siqk71qj" path="res://addons/lazy_list_box/lazy_list_box.tscn" id="1_l30bn"]
-[ext_resource type="Script" uid="uid://dtvldcybqlj1u" path="res://addons/lazy_list_box/demo/demo_fake_data.gd" id="2_uksqp"]
-[ext_resource type="PackedScene" uid="uid://ddw2sr4yo4cg7" path="res://addons/lazy_list_box/demo/demo_item_template.tscn" id="3_vi45l"]
+[ext_resource type="Script" uid="uid://dtvldcybqlj1u" path="res://addons/lazy_list_box/demos/basic_example/demo_fake_data.gd" id="2_uksqp"]
+[ext_resource type="PackedScene" uid="uid://ddw2sr4yo4cg7" path="res://addons/lazy_list_box/demos/basic_example/demo_item_template.tscn" id="3_vi45l"]
 
 [node name="Demo" type="CanvasLayer" unique_id=1127241555]
 

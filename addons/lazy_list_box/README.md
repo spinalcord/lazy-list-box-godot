@@ -248,9 +248,71 @@ press when dragging starts. Use `pressed` for actions, not `button_down`.
 Custom controls must let drag input propagate; controls added dynamically by a
 template should use PASS too. `item_created` can customize newly created rows.
 
+
+## Load more on demand
+
+Loading is optional: `load_more_enabled` defaults to `false`,
+`load_more_threshold` to `10` and `has_more_data` to `true`. The threshold is a
+nonnegative number of entries remaining after the last visible row (including
+partial rows). Zero requests when the last row becomes visible. An empty list
+also requests data. Checks take O(1), run after `fully_ready` and deferred layout,
+and require a positive viewport. Scrolling, resizing, `set_data()` and changes
+to these settings schedule a check.
+
+Connect the parameterless `load_more_requested()` signal before enabling loading:
+
+```gdscript
+var loading := false
+var entries: Array = []
+
+func _ready() -> void:
+    $LazyListBox.load_more_requested.connect(_load_next_page)
+    $LazyListBox.load_more_enabled = true
+
+func _load_next_page() -> void:
+    if loading:
+        return
+    loading = true
+    # Fetch a page here; this example supplies local data.
+    var start := entries.size()
+    for index in range(start, mini(start + 50, 250)):
+        entries.append(index)
+    $LazyListBox.has_more_data = entries.size() < 250
+    loading = false
+    $LazyListBox.set_data(entries)
+
+func _on_retry_pressed() -> void:
+    $LazyListBox.reset_load_more_request()
+```
+
+The application owns fetching, errors and loading state. At most one request is
+emitted until `set_data()` changes the count. `refresh()`, equal-size replacements,
+and toggling settings do not release that lock. Short pages can automatically
+request another page. `reset_load_more_request()` explicitly unlocks and schedules
+a check for retry or switching to a different dataset of the same size. On error,
+release your loading guard and show a Retry button; call the reset method when
+retrying. Set `has_more_data = false` before the final `set_data()` and release
+the loading guard before supplying the updated array. No content or ID comparison
+is performed.
+
+## Demos
+
+The basic demo remains the project start scene. Both scenes can run independently:
+
+```sh
+godot --path . --rendering-method gl_compatibility res://addons/lazy_list_box/demos/basic_example/demo.tscn
+godot --path . --rendering-method gl_compatibility res://addons/lazy_list_box/demos/load_more_example/demo.tscn
+```
+
+The load more demo starts empty, simulates a 0.4-second fetch of 50 entries per
+page, and stops at 250. Scroll down to fetch pages. The first attempt at page 2
+fails deliberately; click **Retry** to resume. Count and status labels show
+loading, failure and the end of data. No network or extra dependencies are used.
+
 ## Verification
 
-Run `godot --headless --path . --script tests/test_list.gd` for regression checks.
+Run `godot --headless --path . --script tests/test_list.gd` for list regression checks.
+Run `godot --headless --path . --script tests/test_load_more.gd` for loading and demo checks.
 Run `godot --path . --script tests/test_pointer.gd` for native pointer checks in
 an actual window (the test enables touch emulation only for its own process).
 
